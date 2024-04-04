@@ -38,7 +38,7 @@
             <p class="botText"><span>Hi, how can I help?</span></p>
         </div>
         <div class="form-group">
-            <input id="textInput" type="text" class="form-control" placeholder="Type your message here...">
+            <input id="textInput" type="text" class="form-control" placeholder="Type your message here..." autofocus>
         </div>
         <button onclick="getReply()" class="btn btn-primary">Send</button>
     </div>
@@ -50,6 +50,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('button').addEventListener('click', getReply);
+            document.getElementById("textInput").addEventListener("keypress", function(event) {
+                // Check if the key pressed is the Enter key
+                if (event.keyCode === 13) {
+                    event.preventDefault(); // Prevent the default action to stop form submission
+                    getReply(); // Call the getReply function
+                }
+            });
         });
         
         function getReply() {
@@ -57,9 +64,9 @@
             let userText = document.getElementById("textInput").value;
             if(userText) {
                 document.getElementById("chatbox").innerHTML += `<p class="userText"><span>${userText}</span></p>`;
-                document.getElementById("textInput").value = ""; // Clear input
+                document.getElementById("textInput").value = ""; // Clear the input field
                 let fetchURL = `/get?msg=${encodeURIComponent(userText)}`;
-                console.log("Fetching URL:", fetchURL); // Log the fetch URL for debugging
+                console.log("Fetching URL:", fetchURL); 
                 fetch(fetchURL)
                 .then(response => {
                     if (!response.ok) {
@@ -68,13 +75,13 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log("Received data:", data); // Log received data
+                    console.log("Received data:", data); 
                     document.getElementById("chatbox").innerHTML += `<p class="botText"><span>${data}</span></p>`;
                     let chatbox = document.getElementById("chatbox");
                     chatbox.scrollTop = chatbox.scrollHeight;
                 })
                 .catch(error => {
-                    console.error('Fetch Error:', error); // More detailed error logging
+                    console.error('Fetch Error:', error); 
                     document.getElementById("chatbox").innerHTML += `<p class="botText"><span>Error communicating with the bot.</span></p>`;
                 });
             } else {
@@ -82,7 +89,5 @@
             }
         }
     </script>
-        
-        
 </body>
 </html>
