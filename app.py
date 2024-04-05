@@ -28,10 +28,34 @@ async def perform_web_action(action_type, params):
     page = await get_browser_page()
 
     if action_type == "click":
-        await page.click(params['uid'])
+        selector = f"[id='{params['uid']}']"
+        await page.click(selector)
+        # await page.click(params['uid'])
+
     elif action_type == "load":
         await page.goto(params['url'])
-    # Implement other actions as needed
+        # page_content = await page.content()
+        # print("Page content loaded:", page_content)
+
+    elif action_type == "scroll":
+        # Note: Playwright does not directly support scroll to x, y. You may need to execute custom JavaScript.
+        await page.evaluate(f"window.scrollTo({params['x']}, {params['y']})")
+
+    elif action_type == "submit":
+        # Assuming the uid is the form element or a submit button within the form
+        form_xpath = f"//*[@id='{params['uid']}']"
+        await page.wait_for_selector(form_xpath, state="visible", timeout=60000)
+        # Triggering form submission
+        await page.evaluate(f"document.querySelector('{form_xpath}').submit();")
+
+    elif action_type == "text_input":
+        input_xpath = f"//*[@id='{params['uid']}']"
+        await page.fill(input_xpath, params['text'])
+        
+    elif action_type == "change":
+        # Assuming 'change' refers to changing the value of an input element
+        input_xpath = f"//*[@id='{params['uid']}']"
+        await page.fill(input_xpath, params['value'])
 
 
 def parse_model_output(output):
@@ -56,9 +80,9 @@ async def get_bot_response_route():
         return jsonify("Hi there! How can I help you?")
     else:
         # Example model output, replace this with your actual model interaction
-        model_output = "say(speaker='navigator', utterance='Sure, performing your request.') load(url='https://www.encyclopedia.com/')"
+        model_output = "say(speaker='navigator', utterance='Sure.') load(url='https://www.encyclopedia.com/') click(uid='67e2a5fb-8b1d-41a0')</s><s>[INST]"
         actions = parse_model_output(model_output)
-        
+        print("actions:", actions)
         # Initialize a variable to hold any 'say' action utterances
         say_utterance = ""
         for action_type, params in actions:
