@@ -112,7 +112,7 @@ async def get_bot_response_route():
         return jsonify("Hi there! How can I help you?")
     else:
         # Example model output, replace this with your actual model interaction text_input(text='biotechnology', uid='67e2a5fb-8b1d-41a0')
-        model_output = "say(speaker='navigator', utterance='Sure.') load(url='https://www.independent.ie/') click(uid='didomi-notice-agree-button')</s><s>[INST]"
+        model_output = "say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/')</s><s>[INST]"
         actions = parse_model_output(model_output)
         print("actions:", actions)
         # Initialize a variable to hold any 'say' action utterances
