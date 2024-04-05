@@ -3,6 +3,9 @@
 ## Installs
 ```
 pip install flask
+pip install "flask[async]"
+pip install playwright
+playwright install
 ```
 
 ## Setup

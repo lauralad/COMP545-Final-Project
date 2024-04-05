@@ -60,11 +60,12 @@
         });
         
         function getReply() {
-            console.log("getReply called"); // Confirm function call
+            console.log("getReply called");
             let userText = document.getElementById("textInput").value;
             if(userText) {
                 document.getElementById("chatbox").innerHTML += `<p class="userText"><span>${userText}</span></p>`;
                 document.getElementById("textInput").value = ""; // Clear the input field
+                document.getElementById("textInput").focus(); // Re-focus on the input field
                 let fetchURL = `/get?msg=${encodeURIComponent(userText)}`;
                 console.log("Fetching URL:", fetchURL); 
                 fetch(fetchURL)
@@ -76,18 +77,21 @@
                 })
                 .then(data => {
                     console.log("Received data:", data); 
+                    // Display the response. Adjust if the backend sends structured data.
                     document.getElementById("chatbox").innerHTML += `<p class="botText"><span>${data}</span></p>`;
                     let chatbox = document.getElementById("chatbox");
                     chatbox.scrollTop = chatbox.scrollHeight;
                 })
                 .catch(error => {
-                    console.error('Fetch Error:', error); 
-                    document.getElementById("chatbox").innerHTML += `<p class="botText"><span>Error communicating with the bot.</span></p>`;
+                    console.error('Fetch Error:', error);
+                    // Enhance error display in the chat interface
+                    document.getElementById("chatbox").innerHTML += `<p class="botText"><span>There was an error processing your request. Please try again.</span></p>`;
                 });
             } else {
                 console.log("No user text entered.");
             }
         }
+
     </script>
 </body>
 </html>
