@@ -5,7 +5,8 @@ import re
 
 app = Flask(__name__)
 
-
+actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='https://www.independent.ie/') click(uid='didomi-notice-agree-button')</s><s>[INST]", 
+                "say(speaker='navigator', utterance='Sure.') click(uid='didomi-notice-agree-button')</s><s>[INST]"]
 # Global variables for the browser and page instances
 browser_instance = None
 page_instance = None
@@ -24,16 +25,47 @@ async def close_browser():
         await browser_instance.close()
         browser_instance = None
 
+# async def handle_cookie_popup(page):
+#     # Replace 'button.close' with the actual selector for the popup's close button
+#     close_button_selector = 'button.close'  
+#     try:
+#         # Wait for the popup to appear. Adjust the timeout as necessary.
+#         await page.wait_for_selector(close_button_selector, state='visible', timeout=5000)
+#         await page.click(close_button_selector)
+#         print("Cookie popup handled.")
+#     except Exception as e:
+#         print("No cookie popup appeared, or there was an issue closing it.", e)
+
 async def perform_web_action(action_type, params):
     page = await get_browser_page()
 
     if action_type == "click":
-        selector = f"[id='{params['uid']}']"
-        await page.click(selector)
-        # await page.click(params['uid'])
+        try:
+            # Using XPath to select the element by its ID, accommodating IDs that start with digits
+            # xpath = f"//*[@id='{params['uid']}']"
+            xpath = f"#{params['uid']}"
+            await page.wait_for_selector(xpath, state="visible", timeout=6000)  # Ensure the element is ready
+            await page.locator(xpath).click(force=True)  # Use force=True to click regardless of being covered
+            print("clicked!")
+        except Exception as e:
+            print(f"An error occurred while clicking: {e}")
 
     elif action_type == "load":
         await page.goto(params['url'])
+        body_html = await page.evaluate("() => document.body.innerHTML")
+
+        # Save to a text file
+        with open('templates/body_content.txt', 'w', encoding='utf-8') as file:
+            file.write(body_html)
+
+        full_html = await page.evaluate("() => document.documentElement.outerHTML")
+
+        # Save to a text file
+        with open('templates/full_document_content.txt', 'w', encoding='utf-8') as file:
+            file.write(full_html)
+        # await handle_cookie_popup(page)
+        # # If needed, wait a bit after closing the popup to ensure the page stabilizes
+        # await page.wait_for_timeout(1000)
         # page_content = await page.content()
         # print("Page content loaded:", page_content)
 
@@ -51,7 +83,7 @@ async def perform_web_action(action_type, params):
     elif action_type == "text_input":
         input_xpath = f"//*[@id='{params['uid']}']"
         await page.fill(input_xpath, params['text'])
-        
+
     elif action_type == "change":
         # Assuming 'change' refers to changing the value of an input element
         input_xpath = f"//*[@id='{params['uid']}']"
@@ -79,8 +111,8 @@ async def get_bot_response_route():
     if user_text.lower() in ["hello", "hi"]:
         return jsonify("Hi there! How can I help you?")
     else:
-        # Example model output, replace this with your actual model interaction
-        model_output = "say(speaker='navigator', utterance='Sure.') load(url='https://www.encyclopedia.com/') click(uid='67e2a5fb-8b1d-41a0')</s><s>[INST]"
+        # Example model output, replace this with your actual model interaction text_input(text='biotechnology', uid='67e2a5fb-8b1d-41a0')
+        model_output = "say(speaker='navigator', utterance='Sure.') load(url='https://www.independent.ie/') click(uid='didomi-notice-agree-button')</s><s>[INST]"
         actions = parse_model_output(model_output)
         print("actions:", actions)
         # Initialize a variable to hold any 'say' action utterances
