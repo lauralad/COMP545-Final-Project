@@ -36,13 +36,20 @@ def extract_content_template(text):
     return clean_html, utterances, viewport, candidates, action_history
 
 def extract_pred(text):
-    pattern = re.compile(r"(.*)<</SYS>>", re.DOTALL)
+    pattern_inst = re.compile(r"(.*?\[INST\])", re.DOTALL)
+    match_inst = pattern_inst.search(text)
     
-    match = pattern.search(text)
-    if match:
-        return match.group(1).strip()
+    if match_inst:
+        return match_inst.group(1)
     else:
-        return "Marker not found."
+        # If "[INST]" is not found, find the first ")" and capture everything up to and including it
+        pattern_parenthesis = re.compile(r"(.*?\))", re.DOTALL)
+        match_parenthesis = pattern_parenthesis.search(text)
+        
+        if match_parenthesis:
+            return match_parenthesis.group(1)
+        else:
+            return "Neither [INST] nor closing parenthesis found."
 
 def run_and_extract_pred(text):
     with open('templates/llama.txt') as f:
@@ -51,15 +58,11 @@ def run_and_extract_pred(text):
     turn_text = template.format(**turn)
     #adjust device either to -1 for cpu, or "device" if previously defined
     action_model = pipeline(
-        model="McGill-NLP/Sheared-LLaMA-1.3B-weblinx", device=-1, torch_dtype='auto'
+        model="McGill-NLP/Sheared-LLaMA-2.7B-weblinx", device=-1, torch_dtype='auto'
     )
     out = action_model(turn_text, return_full_text=False, max_new_tokens=64, truncation=True)
     pred = out[0]['generated_text']
-    pattern = re.compile(r"(.*)<</SYS>>", re.DOTALL)
+    final_pred = extract_pred(pred)
     
-    match = pattern.search(pred)
-    if match:
-        return match.group(1).strip()
-    else:
-        return "Marker not found."
+    return final_pred
         
