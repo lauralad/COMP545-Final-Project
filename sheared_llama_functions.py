@@ -43,4 +43,23 @@ def extract_pred(text):
         return match.group(1).strip()
     else:
         return "Marker not found."
+
+def run_and_extract_pred(text):
+    with open('templates/llama.txt') as f:
+        template = f.read()
+    turn = text
+    turn_text = template.format(**turn)
+    #adjust device either to -1 for cpu, or "device" if previously defined
+    action_model = pipeline(
+        model="McGill-NLP/Sheared-LLaMA-1.3B-weblinx", device=-1, torch_dtype='auto'
+    )
+    out = action_model(turn_text, return_full_text=False, max_new_tokens=64, truncation=True)
+    pred = out[0]['generated_text']
+    pattern = re.compile(r"(.*)<</SYS>>", re.DOTALL)
     
+    match = pattern.search(pred)
+    if match:
+        return match.group(1).strip()
+    else:
+        return "Marker not found."
+        
