@@ -5,8 +5,8 @@ import re
 
 app = Flask(__name__)
 
-actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/') click(uid='rcLink') click(uid='')</s><s>[INST]"
-               ]
+actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/') click(uid='rcLink')</s><s>[INST]",
+               "say(speaker='navigator', utterance='Sure.') click(uid='rcLink')</s><s>[INST]"]
 # Global variables for the browser and page instances
 browser_instance = None
 page_instance = None
@@ -125,41 +125,6 @@ def parse_model_output(output):
         parsed_actions.append((action_type, params))
     return parsed_actions
 
-async def search_and_highlight_info(query):
-    # Open Wikipedia
-    # page_instance, browser_instance = await get_browser_page()
-    # page = await browser.new_page()
-    page_instance, browser_instance = await get_browser_page()
-    await page_instance.goto('https://en.wikipedia.org/wiki/Main_Page')
-    await asyncio.sleep(7)
-    
-    # Add 'say' action to the list of actions
-    actions = [("say", {"speaker": "navigator", "utterance": "Sure."})]
-    
-    # Perform search
-    await page_instance.fill('input[name="search"]', query)
-    await page_instance.press('input[name="search"]', 'Enter')
-    
-    # Wait for search results
-    await page_instance.wait_for_selector('.searchresult')
-    
-    # Click on the search result for McGill University
-    await page_instance.click('a[href*="McGill_University"]')
-    
-    # Wait for page to load
-    await page_instance.wait_for_load_state('networkidle')
-    
-    # Introduce a 30-second delay
-    await asyncio.sleep(7)
-    
-    # Extract and highlight the information about McGill's founding date
-    founding_date_element = await page_instance.query_selector('th:has-text("Established") + td')
-    if founding_date_element:
-        # Highlight the founding date text
-        await founding_date_element.evaluate('(element) => { element.style.backgroundColor = "yellow"; }')
-        # Get the text content of the founding date element
-        founding_date = await founding_date_element.text_content()
-        return founding_date
 @app.route("/")
 async def index():
     return render_template("index.html")
@@ -173,23 +138,16 @@ async def get_bot_response_route():
     else:
         # This is where you'd use your NLP model or some logic to determine the action
         # For demonstration, this is hardcoded to simulate an action
-        # model_output = actions_list.pop(0)
-        # actions = parse_model_output(model_output)
-        # actions = []
+        model_output = actions_list.pop(0)
+        actions = parse_model_output(model_output)
+        actions = []
 
-        # response = ""
-        # for action_type, params in actions:
-        #     print("taking action:", action_type, params)
-        #     await perform_web_action(action_type, params)
-        #     if action_type == "say":
-        #         response = params.get("utterance", "")
-        #     await asyncio.sleep(30)
-                # Assume the user wants to perform a search
-        response = "Sure, let me look that up for you."
-        # Call the search function
-        founding_date = await search_and_highlight_info("McGill")
-        if founding_date:
-            response = f"The founding date of McGill University is {founding_date}."
+        response = ""
+        for action_type, params in actions:
+            print("taking action:", action_type, params)
+            await perform_web_action(action_type, params)
+            if action_type == "say":
+                response = params.get("utterance", "")
     
     return jsonify(response)
 
