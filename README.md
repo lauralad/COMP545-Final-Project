@@ -2,8 +2,7 @@
 
 ## Installs
 ```
-pip install flask
-pip install "flask[async]"
+pip install quart
 pip install playwright
 playwright install
 ```
@@ -11,7 +10,6 @@ playwright install
 ## Setup
 ```
 cd COMP545-FINAL-PROJECT
-export FLASK_APP=app.py
-export FLASK_DEBUG=1
-flask run
+export QUART_APP=app.py
+quart run
 ```
