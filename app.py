@@ -130,27 +130,29 @@ async def search_and_highlight_info(query):
     # page_instance, browser_instance = await get_browser_page()
     # page = await browser.new_page()
     page_instance, browser_instance = await get_browser_page()
-    await page_instance.goto('https://www.google.com/')
-    await asyncio.sleep(7)  # Adjust the sleep time as needed
+    await page_instance.goto('https://en.wikipedia.org/wiki/Main_Page')
+    await asyncio.sleep(7)
     
-    # Perform a Google search for Wikipedia
-    await page_instance.fill('input[name="q"]', 'Wikipedia')
-    await page_instance.press('input[name="q"]', 'Enter')
-    # await page_instance.wait_for_load_state('networkidle')
-    await asyncio.sleep(7)  # Adjust the sleep time as needed
+    # Add 'say' action to the list of actions
+    actions = [("say", {"speaker": "navigator", "utterance": "Sure."})]
     
-    # Click on the Wikipedia link
-    await page_instance.click('a[href*="wikipedia"]')
-    # await page_instance.wait_for_load_state('networkidle')
-    await asyncio.sleep(7)  # Adjust the sleep time as needed
-    
-    # Perform the search on Wikipedia
+    # Perform search
     await page_instance.fill('input[name="search"]', query)
     await page_instance.press('input[name="search"]', 'Enter')
-    # await page_instance.wait_for_load_state('networkidle')
-    await asyncio.sleep(7)  # Adjust the sleep time as needed
     
-    # Extract and highlight the information
+    # Wait for search results
+    await page_instance.wait_for_selector('.searchresult')
+    
+    # Click on the search result for McGill University
+    await page_instance.click('a[href*="McGill_University"]')
+    
+    # Wait for page to load
+    await page_instance.wait_for_load_state('networkidle')
+    
+    # Introduce a 30-second delay
+    await asyncio.sleep(7)
+    
+    # Extract and highlight the information about McGill's founding date
     founding_date_element = await page_instance.query_selector('th:has-text("Established") + td')
     if founding_date_element:
         # Highlight the founding date text
