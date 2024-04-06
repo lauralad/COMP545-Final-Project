@@ -10,6 +10,8 @@ actions_list = [
     "say(speaker='navigator', utterance='Sure.') click(href='/medicine')</s><s>[INST]"
 ]
 
+# actions_list = []
+
 # Global variables for the browser and page instances
 browser_instance = None
 page_instance = None
