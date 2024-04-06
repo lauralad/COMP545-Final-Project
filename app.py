@@ -5,8 +5,7 @@ import re
 
 app = Flask(__name__)
 
-actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/') click(uid='rcLink')</s><s>[INST]", 
-                "say(speaker='navigator', utterance='Alright.') click(uid='rcLink')</s><s>[INST]"
+actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/') click(uid='rcLink') click(uid='')</s><s>[INST]"
                ]
 # Global variables for the browser and page instances
 browser_instance = None
@@ -14,13 +13,14 @@ page_instance = None
 
 
 async def get_browser_page():
-    global global_browser, global_page
-    if global_browser is None:
+    global browser_instance, page_instance
+    # Ensure the playwright and browser are started.
+    if browser_instance is None:
         playwright = await async_playwright().start()
-        global_browser = await playwright.chromium.launch(headless=False)
-    if global_page is None:
-        global_page = await global_browser.new_page()
-    return global_page
+        browser_instance = await playwright.chromium.launch(headless=False)
+    if page_instance is None or page_instance.is_closed():
+        page_instance = await browser_instance.new_page()
+    return page_instance, browser_instance
 
 async def close_browser():
     global browser_instance
@@ -28,34 +28,18 @@ async def close_browser():
         await browser_instance.close()
         browser_instance = None
 
-# async def handle_cookie_popup(page):
-#     # Replace 'button.close' with the actual selector for the popup's close button
-#     close_button_selector = 'button.close'  
-#     try:
-#         # Wait for the popup to appear. Adjust the timeout as necessary.
-#         await page.wait_for_selector(close_button_selector, state='visible', timeout=5000)
-#         await page.click(close_button_selector)
-#         print("Cookie popup handled.")
-#     except Exception as e:
-#         print("No cookie popup appeared, or there was an issue closing it.", e)
-
 async def perform_web_action(action_type, params):
-    global page_instance
-    if not page_instance:
-        page_instance = await get_browser_page()
-
-
+    global page_instance, browser_instance
+    # if not page_instance:
+    #     page_instance = await get_browser_page()
+    page_instance, browser_instance = await get_browser_page()
     if action_type == "click":
-        try:
-            # Using XPath to select the element by its ID, accommodating IDs that start with digits
-            # xpath = f"//*[@id='{params['uid']}']"
-            xpath = f"#{params['uid']}"
-            await page_instance.goto("http://encyclopedia.com/")
-            await page_instance.wait_for_selector(xpath, state="visible", timeout=6000)  # Ensure the element is ready
-            await page_instance.locator(xpath).click(force=True)  # Use force=True to click regardless of being covered
-            print("clicked!")
-        except Exception as e:
-            print(f"An error occurred while clicking: {e}")
+        xpath = f"#{params['uid']}"
+        print(f"Attempting to locate element with XPath: {xpath}")
+        await page_instance.wait_for_selector(xpath, state="visible")
+        print("Element found. Attempting to click.")
+        await page_instance.click(xpath)
+        print("Click action completed successfully.")
 
     elif action_type == "load":
         await page_instance.goto(params['url'])
@@ -106,6 +90,30 @@ async def perform_web_action(action_type, params):
         input_xpath = f"//*[@id='{params['uid']}']"
         await page_instance.fill(input_xpath, params['value'])
 
+# async def perform_web_action(action_type, params):
+#     global page_instance
+#     page = await get_browser_page()
+
+#     try:
+#         if action_type == "click":
+#             xpath = f"#{params['uid']}"
+#             print(f"Attempting to locate element with XPath: {xpath}")
+#             await page.wait_for_selector(xpath, state="visible")
+#             print("Element found. Attempting to click.")
+#             await page.click(xpath)
+#             print("Click action completed successfully.")
+
+#         elif action_type == "load":
+#             await page.goto(params['url'])
+
+#         # Add other actions as elif blocks
+#         print(f"Action {action_type} completed successfully.")
+
+#     except Exception as e:
+#         print(f"Error performing {action_type}: {e}")
+#         # Optionally re-initialize the browser if certain errors are encountered
+#         await close_browser()
+
 
 def parse_model_output(output):
     actions = re.findall(r"(\w+)\(([^)]+)\)", output)
@@ -117,36 +125,73 @@ def parse_model_output(output):
         parsed_actions.append((action_type, params))
     return parsed_actions
 
-
+async def search_and_highlight_info(query):
+    # Open Wikipedia
+    # page_instance, browser_instance = await get_browser_page()
+    # page = await browser.new_page()
+    page_instance, browser_instance = await get_browser_page()
+    await page_instance.goto('https://www.google.com/')
+    await asyncio.sleep(15)  # Adjust the sleep time as needed
+    
+    # Perform a Google search for Wikipedia
+    await page_instance.fill('input[name="q"]', 'Wikipedia')
+    await page_instance.press('input[name="q"]', 'Enter')
+    await page_instance.wait_for_load_state('networkidle')
+    await asyncio.sleep(15)  # Adjust the sleep time as needed
+    
+    # Click on the Wikipedia link
+    await page_instance.click('a[href*="wikipedia"]')
+    await page_instance.wait_for_load_state('networkidle')
+    await asyncio.sleep(15)  # Adjust the sleep time as needed
+    
+    # Perform the search on Wikipedia
+    await page_instance.fill('input[name="search"]', query)
+    await page_instance.press('input[name="search"]', 'Enter')
+    await page_instance.wait_for_load_state('networkidle')
+    await asyncio.sleep(15)  # Adjust the sleep time as needed
+    
+    # Extract and highlight the information
+    founding_date_element = await page_instance.query_selector('th:has-text("Established") + td')
+    if founding_date_element:
+        # Highlight the founding date text
+        await founding_date_element.evaluate('(element) => { element.style.backgroundColor = "yellow"; }')
+        # Get the text content of the founding date element
+        founding_date = await founding_date_element.text_content()
+        return founding_date
 @app.route("/")
-def index():
+async def index():
     return render_template("index.html")
 
 @app.route("/get", methods=["GET"])
 async def get_bot_response_route():
     user_text = request.args.get('msg')
-    if user_text.lower() in ["hello", "hi"]:
-        return jsonify("Hi there! How can I help you?")
+    # Implement your conditions for handling user text
+    if user_text.lower() in ["hello", "hi", "good afternoon"]:
+        response = "Hi there! How can I help you?"
     else:
-        # Example model output, replace this with your actual model interaction text_input(text='biotechnology', uid='67e2a5fb-8b1d-41a0')
-        model_output = actions_list.pop(0)
-        actions = parse_model_output(model_output)
-        print("actions:", actions)
-        # Initialize a variable to hold any 'say' action utterances
-        say_utterance = ""
-        for action_type, params in actions:
-            if action_type == "say":
-                # Directly capture the 'say' action's utterance
-                say_utterance = params.get("utterance", "")
-            else:
-                # Perform other web actions silently
-                print("taking action:", action_type, params)
-                await perform_web_action(action_type, params)
-        
-        # Return the 'say' action utterance, or a default message if none is found
-        return jsonify(say_utterance if say_utterance else "Action is being processed.")
+        # This is where you'd use your NLP model or some logic to determine the action
+        # For demonstration, this is hardcoded to simulate an action
+        # model_output = actions_list.pop(0)
+        # actions = parse_model_output(model_output)
+        # actions = []
 
+        # response = ""
+        # for action_type, params in actions:
+        #     print("taking action:", action_type, params)
+        #     await perform_web_action(action_type, params)
+        #     if action_type == "say":
+        #         response = params.get("utterance", "")
+        #     await asyncio.sleep(30)
+                # Assume the user wants to perform a search
+        response = "Sure, let me look that up for you."
+        # Call the search function
+        founding_date = await search_and_highlight_info("McGill")
+        if founding_date:
+            response = f"The founding date of McGill University is {founding_date}."
+    
+    return jsonify(response)
 
+    # return jsonify(response)
 
 if __name__ == "__main__":
     app.run(debug=True)

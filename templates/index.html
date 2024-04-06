@@ -51,47 +51,41 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('button').addEventListener('click', getReply);
             document.getElementById("textInput").addEventListener("keypress", function(event) {
-                // Check if the key pressed is the Enter key
-                if (event.keyCode === 13) {
-                    event.preventDefault(); // Prevent the default action to stop form submission
-                    getReply(); // Call the getReply function
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    getReply();
                 }
             });
         });
-        
-        function getReply() {
+
+        async function getReply() {
             console.log("getReply called");
-            let userText = document.getElementById("textInput").value;
+            const userText = document.getElementById("textInput").value;
             if(userText) {
-                document.getElementById("chatbox").innerHTML += `<p class="userText"><span>${userText}</span></p>`;
-                document.getElementById("textInput").value = ""; // Clear the input field
-                document.getElementById("textInput").focus(); // Re-focus on the input field
-                let fetchURL = `/get?msg=${encodeURIComponent(userText)}`;
-                console.log("Fetching URL:", fetchURL); 
-                fetch(fetchURL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Received data:", data); 
-                    // Display the response. Adjust if the backend sends structured data.
-                    document.getElementById("chatbox").innerHTML += `<p class="botText"><span>${data}</span></p>`;
-                    let chatbox = document.getElementById("chatbox");
+                const chatbox = document.getElementById("chatbox");
+                chatbox.innerHTML += `<p class="userText"><span>${userText}</span></p>`;
+                document.getElementById("textInput").value = "";
+                document.getElementById("textInput").focus();
+
+                const fetchURL = `/get?msg=${encodeURIComponent(userText)}`;
+                console.log("Fetching URL:", fetchURL);
+
+                try {
+                    const response = await fetch(fetchURL);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+
+                    console.log("Received data:", data);
+                    chatbox.innerHTML += `<p class="botText"><span>${data}</span></p>`;
                     chatbox.scrollTop = chatbox.scrollHeight;
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Fetch Error:', error);
-                    // Enhance error display in the chat interface
-                    document.getElementById("chatbox").innerHTML += `<p class="botText"><span>There was an error processing your request. Please try again.</span></p>`;
-                });
+                    chatbox.innerHTML += `<p class="botText"><span>There was an error processing your request. Please try again.</span></p>`;
+                }
             } else {
                 console.log("No user text entered.");
             }
         }
-
     </script>
 </body>
 </html>
