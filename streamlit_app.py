@@ -140,12 +140,20 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
     show_advanced_info = st.session_state.get("show_advanced_information", False)
 
+    # if screenshot_size == "regular":
+    #     col_layout = [1.5, 1.5, 7, 3.5]
+    # elif screenshot_size == "small":
+    #     col_layout = [1.5, 1.5, 7, 2]
+    # else:  # screenshot_size == 'large'
+    #     col_layout = [1.5, 1.5, 11]
+
     if screenshot_size == "regular":
-        col_layout = [1.5, 1.5, 7, 3.5]
+        col_layout = [1.5, 1.5, 3.5, 3.5]  # Adjusted for two columns
     elif screenshot_size == "small":
-        col_layout = [1.5, 1.5, 7, 2]
+        col_layout = [1.5, 1.5, 3.5, 3.5]
     else:  # screenshot_size == 'large'
-        col_layout = [1.5, 1.5, 11]
+        col_layout = [1.5, 1.5, 5.5, 5.5]
+
 
     # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
     # screenshots = load_screenshots(data, basedir)
@@ -160,16 +168,6 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
-        # st.write(f"Turn {i}: {d}")
-    # for i, d in enumerate(turns_to_show):
-        # st.write(f"Turn index {selected_turn + i}, data: {d}")
-
-
-    # for i, d in enumerate(data):
-
-        # select turn (dropdown) d -> true, pred
-        # print("index", i, "data", d)
-        # st.write(f"index {i}, data {d}") #data
         
         if i > 0 and show_advanced_info:
             # Use html to add a horizontal line with minimal gap
@@ -177,11 +175,12 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
                 "<hr style='margin-top: 0.1rem; margin-bottom: 0.1rem;'/>",
                 unsafe_allow_html=True,
             )
-        if screenshot_size == "large":
-            col_time, col_i, col_act = st.columns(col_layout)
-            col_actvis = col_act
-        else:
-            col_time, col_i, col_act, col_actvis = st.columns(col_layout)
+      
+        # Create columns for the overview
+        cols = st.columns(col_layout)
+        col_time, col_i, col_act1, col_act2 = cols  # Split into two action columns
+        # col_time, col_i, col_act, col_actvis = st.columns(col_layout)
+
         secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
         col_time.markdown(
@@ -211,7 +210,9 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
             col_i.button(f"#{i}", type='secondary')
 
         if d["type"] == "chat":
-            col_act.markdown(format_chat_message(d), unsafe_allow_html=True)
+            # col_act.markdown(format_chat_message(d), unsafe_allow_html=True)
+            col_act1.markdown(format_chat_message(d), unsafe_allow_html=True)
+            col_act2.markdown(format_chat_message(d), unsafe_allow_html=True)
             continue
 
         # screenshot_filename = d["state"]["screenshot"]
@@ -228,11 +229,13 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # screenshot_path = execute_browser_action(d['action'])
         if screenshot_path:
             img = Image.open(screenshot_path)
-            col_actvis.image(img, caption="Screenshot after action")
+            col_act2.image(img, caption="Screenshot after action")
         if img:
-            col_actvis.image(img)
+            col_act1.image(img)
         
-        col_act.markdown(action_str)
+        # col_act.markdown(action_str)
+        col_act1.markdown(action_str)
+        col_act2.markdown(action_str)
 
         if show_advanced_info:
             status = d["state"].get("screenshot_status", "unknown")
@@ -243,7 +246,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
             text += f'Screenshot: `{d["state"]["screenshot"]}`\\\n'
             text += f'Page: `{d["state"]["page"]}`\n'
 
-            col_act.markdown(text)
+            col_act1.markdown(text)
+            col_act2.markdown(text)
 
 
 def load_recording(basedir):
