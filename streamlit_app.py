@@ -3,6 +3,7 @@ import json
 import os
 import time
 from pathlib import Path
+from tkinter import Image
 from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
@@ -34,6 +35,7 @@ def execute_browser_action(action):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)  # Set headless=False to observe actions
         page = browser.new_page()
+        screenshot_path = "screenshot.png"
         
         if action['intent'] == 'load':
             page.goto(action['arguments']['metadata']['url'])
@@ -46,8 +48,9 @@ def execute_browser_action(action):
             page.type(action['arguments']['element']['xpath'], action['pasted'])
         elif action['intent'] == 'submit':
             page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
-        
+        page.screenshot(path=screenshot_path)
         browser.close()
+        return screenshot_path
 
 def show_selectbox(demonstration_dir):
     # find all the subdirectories in the current directory
@@ -163,8 +166,11 @@ def show_overview(data, recording_name, basedir):
         action_str = f"**{event_type}**({arguments})"
 
         # Do the action in the browser
-        execute_browser_action(d['action'])
-
+        # execute_browser_action(d['action'])
+        screenshot_path = execute_browser_action(d['action'])
+        if screenshot_path:
+            img = Image.open(screenshot_path)
+            col_actvis.image(img, caption="Screenshot after action")
         if img:
             col_actvis.image(img)
         
