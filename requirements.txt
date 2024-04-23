@@ -1,1 +1,6 @@
-streamlit
+streamlit 
+datasets 
+huggingface_hub 
+weblinx 
+sentence_transformers 
+playwright

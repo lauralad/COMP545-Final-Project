@@ -3,6 +3,7 @@ import json
 import os
 import time
 from pathlib import Path
+from playwright.sync_api import sync_playwright
 
 import streamlit as st
 
@@ -55,10 +56,22 @@ def show_overview(data, recording_name, basedir):
 
     # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
     # screenshots = load_screenshots(data, basedir)
+    even_indices = [i for i in range(0, len(data), 2)]
+    selected_turn = st.sidebar.selectbox("Select Turn", even_indices)
 
-    for i, d in enumerate(data):
+    turns_to_show = data[selected_turn:selected_turn+2]
+    
+    for i, d in enumerate(turns_to_show):
+        # st.write(f"Turn index {selected_turn + i}, data: {d}")
+
+
+    # for i, d in enumerate(data):
+
+        # select turn (dropdown) d -> true, pred
         # print("index", i, "data", d)
         st.write(f"index {i}, data {d}")
+        
+
 
         if i > 0 and show_advanced_info:
             # Use html to add a horizontal line with minimal gap
