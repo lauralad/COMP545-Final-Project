@@ -32,7 +32,7 @@ def install_playwright():
 
 def execute_browser_action(action):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)  # Set headless=False to observe actions
+        browser = p.chromium.launch(headless=True)  # Set headless=False to observe actions
         page = browser.new_page()
         
         if action['intent'] == 'load':
