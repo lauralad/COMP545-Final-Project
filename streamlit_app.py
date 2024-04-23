@@ -26,6 +26,7 @@ from utils import (
 
 from playwright.sync_api import sync_playwright, Playwright, Browser
 from datasets import load_dataset
+import base64
 
 playwright: Playwright = None
 browser: Browser = None
@@ -64,6 +65,13 @@ def setup_browser():
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(headless=True)
     page = browser.new_page()
+
+def load_html_content(html_content):
+    # Convert HTML content to a data URL
+    encoded_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
+    data_url = f"data:text/html;base64,{encoded_html}"
+    page.goto(data_url)
+    
 
 def shutdown_browser():
     if browser:
@@ -184,6 +192,9 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         elif d["type"] == "browser" and (page_filename := d["state"]["page"]):
             page_path = f"{basedir}/pages/{page_filename}"
+            html_page = load_page(page_path)
+            load_html_content(html_page)
+            page.screenshot(path="screenshot.png")
 
             col_i.download_button(
                 label="#" + str(i),
@@ -211,11 +222,11 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # Do the action in the browser
         # execute_browser_action(d['action'])
         # screenshot_path = execute_browser_action(d['action'])
-        # if screenshot_path:
-        #     img = Image.open(screenshot_path)
-        #     col_actvis.image(img, caption="Screenshot after action")
-        # if img:
-        #     col_actvis.image(img)
+        if screenshot_path:
+            img = Image.open(screenshot_path)
+            col_actvis.image(img, caption="Screenshot after action")
+        if img:
+            col_actvis.image(img)
         
         col_act.markdown(action_str)
 
