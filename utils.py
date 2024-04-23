@@ -76,7 +76,7 @@ def parse_arguments(action):
     event_type = action["intent"]
     args = action["arguments"]
     # print("args: ", args)
-    st.write(f"args {args}")
+    # st.write(f"args {args}")
 
     if event_type == "textInput":
         txt = args["text"]

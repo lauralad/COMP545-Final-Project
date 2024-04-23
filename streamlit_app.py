@@ -79,7 +79,7 @@ def show_overview(data, recording_name, basedir):
 
         # select turn (dropdown) d -> true, pred
         # print("index", i, "data", d)
-        st.write(f"index {i}, data {d}") #data
+        # st.write(f"index {i}, data {d}") #data
         
 
 
