@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 from PIL import Image
-from playwright.sync_api import sync_playwright
+# from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
 # from selenium import webdriver
@@ -24,6 +24,24 @@ from utils import (
     load_page,
 )
 
+from playwright.sync_api import sync_playwright, Playwright, Browser
+
+playwright: Playwright = None
+browser: Browser = None
+page = None
+
+def setup_browser():
+    global playwright, browser, page
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=True)
+    page = browser.new_page()
+
+def shutdown_browser():
+    if browser:
+        browser.close()
+    if playwright:
+        playwright.stop()
+
 def install_playwright():
     # Install Playwright and browsers
     # subprocess.run(["pip", "install", "playwright"], check=True)
@@ -32,25 +50,23 @@ def install_playwright():
     os.system('playwright install')
 
 def execute_browser_action(action):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)  # Set headless=False to observe actions
-        page = browser.new_page()
-        screenshot_path = "screenshot.png"
-        
-        if action['intent'] == 'load':
-            page.goto(action['arguments']['metadata']['url'])
-        elif action['intent'] == 'click':
-            page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
-        elif action['intent'] == 'textInput':
-            page.fill(action['arguments']['element']['xpath'], action['text'])
-        elif action['intent'] == 'paste':
-            # Simulate paste action (Playwright doesn't have a direct paste method)
-            page.type(action['arguments']['element']['xpath'], action['pasted'])
-        elif action['intent'] == 'submit':
-            page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
-        page.screenshot(path=screenshot_path)
-        browser.close()
-        return screenshot_path
+    
+    screenshot_path = "screenshot.png"
+    
+    if action['intent'] == 'load':
+        page.goto(action['arguments']['metadata']['url'])
+    elif action['intent'] == 'click':
+        page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
+    elif action['intent'] == 'textInput':
+        page.fill(action['arguments']['element']['xpath'], action['text'])
+    elif action['intent'] == 'paste':
+        # Simulate paste action (Playwright doesn't have a direct paste method)
+        page.type(action['arguments']['element']['xpath'], action['pasted'])
+    elif action['intent'] == 'submit':
+        page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
+    page.screenshot(path=screenshot_path)
+    
+    return screenshot_path
 
 def show_selectbox(demonstration_dir):
     # find all the subdirectories in the current directory
@@ -283,77 +299,53 @@ def load_recording(basedir):
 
 
 def run():
-    # mode = st.sidebar.radio("Mode", ["Overview"])
-    demonstration_dir = "./wl_data/demonstrations"
+    setup_browser()
+    try:
     
+        demonstration_dir = "./wl_data/demonstrations"
+        
+        demo_names = os.listdir(demonstration_dir)
 
-    # # params = st.experimental_get_query_params()
-    # params = st.query_params
-    # print(params)
-    
-    # # list demonstrations/
-    # demo_names = os.listdir(demonstration_dir)
+        def update_recording_name():
+            st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
 
-    # if params.get("recording"):
-    #     if isinstance(params["recording"], list):
-    #         recording_name = params["recording"][0]
-    #     else:
-    #         recording_name = params["recording"]
-
-    # else:
-    #     recording_name = demo_names[0]
-    
-    # recording_name = st.sidebar.selectbox(
-    #     "Recordings",
-    #     demo_names,
-    #     index=demo_names.index(recording_name),
-    # )
-
-    # if recording_name != params.get("recording", [None])[0]:
-    #     # st.experimental_set_query_params(recording=recording_name)
-    #     # use st.query_params as a dict instead
-    #     st.query_params['recording'] = recording_name
-
-
-    demo_names = os.listdir(demonstration_dir)
-
-    def update_recording_name():
-        st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
-
-    # For initial run, set the query parameter to the selected recording
-    if not st.query_params.get("recording"):
-        update_recording_name()
-    
-    recording_name = st.query_params.get("recording")
-    if recording_name not in demo_names:
-        st.error(f"Recording `{recording_name}` not found. Please select another recording.")
-        st.stop()
-    
-    recording_idx = demo_names.index(recording_name)
-    st.sidebar.selectbox(
-        "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
-    )
-
-    with st.sidebar:
-        # Want a dropdown
-        st.selectbox(
-            "Screenshot size",
-            ["small", "regular", "large"],
-            index=1,
-            key="screenshot_size_view_mode",
+        # For initial run, set the query parameter to the selected recording
+        if not st.query_params.get("recording"):
+            update_recording_name()
+        
+        recording_name = st.query_params.get("recording")
+        if recording_name not in demo_names:
+            st.error(f"Recording `{recording_name}` not found. Please select another recording.")
+            st.stop()
+        
+        recording_idx = demo_names.index(recording_name)
+        st.sidebar.selectbox(
+            "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
         )
 
-    if recording_name is not None:
-        basedir = f"{demonstration_dir}/{recording_name}"
-        data = load_recording(basedir=basedir)
+        with st.sidebar:
+            # Want a dropdown
+            st.selectbox(
+                "Screenshot size",
+                ["small", "regular", "large"],
+                index=1,
+                key="screenshot_size_view_mode",
+            )
 
-        if not data:
-            st.stop()
+        if recording_name is not None:
+            basedir = f"{demonstration_dir}/{recording_name}"
+            data = load_recording(basedir=basedir)
 
-        show_overview(data, recording_name=recording_name, basedir=basedir)
+            if not data:
+                st.stop()
+
+            show_overview(data, recording_name=recording_name, basedir=basedir)
+    finally:
+        shutdown_browser()
+    
 
 
 if __name__ == "__main__":
     install_playwright()
-    st.set_page_config(layout="wide")
+    # st.set_page_config(layout="wide")
     run()
