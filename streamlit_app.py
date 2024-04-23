@@ -32,25 +32,28 @@ browser: Browser = None
 page = None
 dataset_splits = ["test_cat", "test_geo", "test", "test_vis", "test_web", "train", "validation"]
 datasets = {}
-unique_tuples_dict = {}
+unique_data_dict = {}
+
 def setup_datasets():
-    global datasets, unique_tuples_dict
+    global datasets, unique_data_dict
     for split in dataset_splits:
         datasets[split] = load_dataset("McGill-NLP/weblinx", split=split)
-    # Dictionary to store unique tuples for each dataset
-    
-    # Iterate through datasets
+
     for split, dataset in datasets.items():
-        # Set to store unique tuples for current dataset
-        unique_tuples = set()
+    # Dictionary to store unique demos and their corresponding unique turn_nums for current dataset
+        unique_data_dict[split] = {}
         # Iterate through current dataset
         for turn in dataset:
             demo = turn["demo"]
             turn_num = turn["turn"]
-            element_tuple = (demo, turn_num)
-            unique_tuples.add(element_tuple)
-        # Store unique tuples for current dataset in unique_tuples_dict
-        unique_tuples_dict[split] = unique_tuples
+            # Check if demo exists in unique_data_dict[split]
+            if demo not in unique_data_dict[split]:
+                # If demo is not already in the dictionary, create a new list for it
+                unique_data_dict[split][demo] = []
+            # Check if turn_num is unique for the current demo
+            if turn_num not in unique_data_dict[split][demo]:
+                # If turn_num is unique, add it to the list of unique turn_nums for the current demo
+                unique_data_dict[split][demo].append(turn_num)
 
 def setup_browser():
     global playwright, browser, page
@@ -343,27 +346,42 @@ def run():
             st.stop()
         
         recording_idx = demo_names.index(recording_name)
-        st.sidebar.selectbox(
-            "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
-        )
+        dataset = st.sidebar.selectbox("Select Dataset", list(unique_data_dict.keys()), on_change=update_recording_name)
+        if dataset:
+            demos = unique_data_dict[dataset]
+            demo_name = st.sidebar.selectbox("Select Demo", list(demos.keys()))
 
-        with st.sidebar:
-            # Want a dropdown
-            st.selectbox(
-                "Screenshot size",
-                ["small", "regular", "large"],
-                index=1,
-                key="screenshot_size_view_mode",
-            )
+            # Dropdown to select the turn number based on the selected demo
+            if demo_name:
+                turns = demos[demo_name]
+                selected_turn = st.sidebar.selectbox("Select Turn Number", sorted(turns))
 
-        if recording_name is not None:
-            basedir = f"{demonstration_dir}/{recording_name}"
-            data = load_recording(basedir=basedir)
+                # Display or process data based on selected turn
+                st.write(f"Selected Dataset: {dataset}")
+                st.write(f"Selected Demo: {demo_name}")
+                st.write(f"Selected Turn: {selected_turn}")
+                
+                st.sidebar.selectbox(
+                    "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
+                )
 
-            if not data:
-                st.stop()
+                with st.sidebar:
+                    # Want a dropdown
+                    st.selectbox(
+                        "Screenshot size",
+                        ["small", "regular", "large"],
+                        index=1,
+                        key="screenshot_size_view_mode",
+                    )
 
-            show_overview(data, recording_name=recording_name, basedir=basedir)
+                if recording_name is not None:
+                    basedir = f"{demonstration_dir}/{recording_name}"
+                    data = load_recording(basedir=basedir)
+
+                    if not data:
+                        st.stop()
+
+                    show_overview(data, recording_name=recording_name, basedir=basedir)
     finally:
         shutdown_browser()
     
@@ -372,6 +390,6 @@ def run():
 if __name__ == "__main__":
     install_playwright()
     setup_datasets()
-    st.write("unique tuples", unique_tuples_dict)
+    st.write("unique tuples", unique_data_dict)
     # st.set_page_config(layout="wide")
     run()
