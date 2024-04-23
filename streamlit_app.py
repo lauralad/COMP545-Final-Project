@@ -214,7 +214,7 @@ def load_recording(basedir):
 
 def run():
     # mode = st.sidebar.radio("Mode", ["Overview"])
-    demonstration_dir = "./demonstrations"
+    demonstration_dir = "./wl_data/demonstrations"
 
     # # params = st.experimental_get_query_params()
     # params = st.query_params
