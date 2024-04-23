@@ -272,6 +272,7 @@ def load_recording(basedir):
 def run():
     # mode = st.sidebar.radio("Mode", ["Overview"])
     demonstration_dir = "./wl_data/demonstrations"
+    
 
     # # params = st.experimental_get_query_params()
     # params = st.query_params
@@ -330,7 +331,7 @@ def run():
         )
 
     if recording_name is not None:
-        basedir = f"{demonstration_dir}/{recording_name}"
+        basedir = f"./wl_data/{demonstration_dir}/{recording_name}"
         data = load_recording(basedir=basedir)
 
         if not data:
