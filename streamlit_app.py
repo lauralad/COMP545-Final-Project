@@ -46,7 +46,7 @@ def show_overview(data, recording_name, basedir):
 
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
-    print(instructor_turns)
+    st.write(f"instructor_turns {instructor_turns}")
     selected_turn_idx = st.sidebar.selectbox("Select Instructor Turn", instructor_turns)
 
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
