@@ -25,10 +25,32 @@ from utils import (
 )
 
 from playwright.sync_api import sync_playwright, Playwright, Browser
+from datasets import load_dataset
 
 playwright: Playwright = None
 browser: Browser = None
 page = None
+dataset_splits = ["test_cat", "test_geo", "test", "test_vis", "test_web", "train", "validation"]
+datasets = {}
+unique_tuples_dict = {}
+def setup_datasets():
+    global datasets, unique_tuples_dict
+    for split in dataset_splits:
+        datasets[split] = load_dataset("McGill-NLP/weblinx", split=split)
+    # Dictionary to store unique tuples for each dataset
+    
+    # Iterate through datasets
+    for split, dataset in datasets.items():
+        # Set to store unique tuples for current dataset
+        unique_tuples = set()
+        # Iterate through current dataset
+        for turn in dataset:
+            demo = turn["demo"]
+            turn_num = turn["turn"]
+            element_tuple = (demo, turn_num)
+            unique_tuples.add(element_tuple)
+        # Store unique tuples for current dataset in unique_tuples_dict
+        unique_tuples_dict[split] = unique_tuples
 
 def setup_browser():
     global playwright, browser, page
@@ -299,6 +321,8 @@ def load_recording(basedir):
 
 
 def run():
+    setup_datasets()
+    print("splits", datasets)
     setup_browser()
     try:
     
