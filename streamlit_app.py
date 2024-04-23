@@ -129,7 +129,7 @@ def show_selectbox(demonstration_dir):
 def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
     st.header(f"Recording: `{dataset} > Demo {demo_name} > Turn {turn}`")
-
+    screenshot_path = "screenshot.png"
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
     # st.write(f"instructor_turns {instructor_turns}")
