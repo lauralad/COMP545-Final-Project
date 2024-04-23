@@ -210,11 +210,11 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # Do the action in the browser
         # execute_browser_action(d['action'])
         # screenshot_path = execute_browser_action(d['action'])
-        if screenshot_path:
-            img = Image.open(screenshot_path)
-            col_actvis.image(img, caption="Screenshot after action")
-        if img:
-            col_actvis.image(img)
+        # if screenshot_path:
+        #     img = Image.open(screenshot_path)
+        #     col_actvis.image(img, caption="Screenshot after action")
+        # if img:
+        #     col_actvis.image(img)
         
         col_act.markdown(action_str)
 
