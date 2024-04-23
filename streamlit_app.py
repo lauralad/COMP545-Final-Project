@@ -23,6 +23,25 @@ def install_playwright():
     # subprocess.run(["pip", "install", "playwright"], check=True)
     subprocess.run(["playwright", "install"], check=True)
 
+def execute_browser_action(action):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)  # Set headless=False to observe actions
+        page = browser.new_page()
+        
+        if action['intent'] == 'load':
+            page.goto(action['arguments']['url'])
+        elif action['intent'] == 'click':
+            page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
+        elif action['intent'] == 'textInput':
+            page.fill(action['arguments']['element']['xpath'], action['text'])
+        elif action['intent'] == 'paste':
+            # Simulate paste action (Playwright doesn't have a direct paste method)
+            page.type(action['arguments']['element']['xpath'], action['pasted'])
+        elif action['intent'] == 'submit':
+            page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
+        
+        browser.close()
+
 def show_selectbox(demonstration_dir):
     # find all the subdirectories in the current directory
     dirs = [
@@ -135,6 +154,9 @@ def show_overview(data, recording_name, basedir):
         event_type = d["action"]["intent"]
 
         action_str = f"**{event_type}**({arguments})"
+
+        # Do the action in the browser
+        execute_browser_action(d['action'])
 
         if img:
             col_actvis.image(img)
