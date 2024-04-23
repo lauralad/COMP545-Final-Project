@@ -100,7 +100,7 @@ def show_overview(data, recording_name, basedir):
         # screenshot_filename = d["state"]["screenshot"]
         img = get_screenshot(d, basedir)
         arguments = parse_arguments(d["action"])
-        st.write(f"parsed arguments {arguments}")
+        # st.write(f"parsed arguments {arguments}")
 
         event_type = d["action"]["intent"]
 
