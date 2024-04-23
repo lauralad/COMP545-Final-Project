@@ -166,6 +166,14 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         st.write("No previous instructor turn found.")
         return  # Exit the function if there's no previous instructor turn
 
+    # Create columns for the overview
+    cols = st.columns(col_layout)
+    col_time, col_i, col_act1, col_act2 = cols  # Split into two action columns
+    # col_time, col_i, col_act, col_actvis = st.columns(col_layout)
+    # Adding titles for each column
+    col_act1.markdown("### True Answer")
+    col_act2.markdown("### Model Prediction")
+
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
         
@@ -176,13 +184,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
                 unsafe_allow_html=True,
             )
       
-        # Create columns for the overview
-        cols = st.columns(col_layout)
-        col_time, col_i, col_act1, col_act2 = cols  # Split into two action columns
-        # col_time, col_i, col_act, col_actvis = st.columns(col_layout)
-        # Adding titles for each column
-        col_act1.markdown("### True Answer")
-        col_act2.markdown("### Model Prediction")
+        
         
         col_time.markdown("<br><br>", unsafe_allow_html=True)  # Adjust the number of <br> tags as needed
         col_i.markdown("<br><br>", unsafe_allow_html=True)  
