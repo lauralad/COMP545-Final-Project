@@ -47,7 +47,7 @@ def show_overview(data, recording_name, basedir):
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
     st.write(f"instructor_turns {instructor_turns}")
-    st.write(f"turn 5 {data[5]}")
+    # st.write(f"turn 5 {data[5]}")
     selected_turn_idx = st.sidebar.selectbox("Select Instructor Turn", instructor_turns)
 
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
@@ -63,16 +63,17 @@ def show_overview(data, recording_name, basedir):
     # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
     # screenshots = load_screenshots(data, basedir)
 
-    # Determine range to display: from selected turn to the next instructor turn
-    next_turn_idx = selected_turn_idx + 1
-    while next_turn_idx < len(instructor_turns) and instructor_turns[next_turn_idx] == selected_turn_idx + 1:
-        next_turn_idx += 1
-    if next_turn_idx < len(instructor_turns):
-        turns_to_show = data[selected_turn_idx:instructor_turns[next_turn_idx]]
+    # Find the next instructor turn index after the selected one
+    next_instructor_turn_idx = next((idx for idx in instructor_turns if idx > selected_turn_idx), None)
+
+    # Determine turns to show
+    if next_instructor_turn_idx:
+        turns_to_show = data[selected_turn_idx:next_instructor_turn_idx]
     else:
+        # If there is no next instructor turn, display from the selected turn to the end of data
         turns_to_show = data[selected_turn_idx:]
 
-    
+
     for i, d in enumerate(turns_to_show):
         # st.write(f"Turn index {selected_turn + i}, data: {d}")
 
