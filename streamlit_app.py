@@ -381,7 +381,7 @@ def run():
                     basedir = f"{demonstration_dir}/{recording_name}"
                     data = load_recording(basedir=basedir)
 
-                    data = unique_data_dict[dataset][demo_name][selected_turn]
+                    # data = unique_data_dict[dataset][demo_name][selected_turn]
 
                     show_overview(data, recording_name=recording_name,dataset=dataset, demo_name=demo_name, turn=selected_turn, basedir=basedir)
     finally:
