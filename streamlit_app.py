@@ -64,6 +64,7 @@ def init_model():
     global action_model, template
     # Ensure the right device is used (CPU or CUDA)
     device = 0 if torch.cuda.is_available() else -1
+    st.write(f"device: {device}")
 
     # Download templates
     snapshot_download(
@@ -380,7 +381,6 @@ def run():
     finally:
         shutdown_browser()
     
-
 
 if __name__ == "__main__":
     init_model()
