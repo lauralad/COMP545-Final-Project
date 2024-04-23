@@ -455,6 +455,7 @@ def run():
 
 
 if __name__ == "__main__":
+    init_model()
     install_playwright()
     setup_datasets()
     # st.write("unique tuples", unique_data_dict)
