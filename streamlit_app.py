@@ -346,6 +346,9 @@ def run():
             st.stop()
         
         recording_idx = demo_names.index(recording_name)
+        st.sidebar.selectbox(
+            "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
+        )
         dataset = st.sidebar.selectbox("Select Dataset", list(unique_data_dict.keys()), on_change=update_recording_name)
         if dataset:
             demos = unique_data_dict[dataset]
@@ -361,9 +364,7 @@ def run():
                 st.write(f"Selected Demo: {demo_name}")
                 st.write(f"Selected Turn: {selected_turn}")
 
-                st.sidebar.selectbox(
-                    "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
-                )
+                
 
                 with st.sidebar:
                     # Want a dropdown
