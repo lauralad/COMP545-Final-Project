@@ -80,6 +80,7 @@ def init_model():
     )
 
 def get_pred_for_turn(split, demo, turn_num):
+    global unique_data_dict, action_model, template
     turn = unique_data_dict[split][demo][turn_num]
     turn_formatted = template.format(**turn)
 
@@ -175,13 +176,6 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     selected_turn_idx = turn #6
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
     show_advanced_info = st.session_state.get("show_advanced_information", False)
-
-    # if screenshot_size == "regular":
-    #     col_layout = [1.5, 1.5, 7, 3.5]
-    # elif screenshot_size == "small":
-    #     col_layout = [1.5, 1.5, 7, 2]
-    # else:  # screenshot_size == 'large'
-    #     col_layout = [1.5, 1.5, 11]
 
     if screenshot_size == "regular":
         col_layout = [1.5, 1.5, 3.5, 3.5]  # Adjusted for two columns
@@ -310,9 +304,7 @@ def load_recording(basedir):
     st.sidebar.checkbox(
         "Advanced Screenshot Info", False, key="show_advanced_information"
     )
-    # st.sidebar.checkbox(
-    #     "Enable HTML download", False, key="enable_html_download"
-    # )
+
     replay_file = replay_file.replace(".json", "")
     
     if not Path(basedir).joinpath('metadata.json').exists():
@@ -320,18 +312,6 @@ def load_recording(basedir):
         st.stop()
     
     metadata = load_json_no_cache(basedir, "metadata")
-
-    # convert timestamp to readable date string
-    # recording_start_timestamp = metadata["recordingStart"]
-    # recording_start_date = datetime.fromtimestamp(
-    #     int(recording_start_timestamp) / 1000
-    # ).strftime("%Y-%m-%d %H:%M:%S")
-    # st.sidebar.markdown(f"**started**: {recording_start_date}")
-
-    # recording_end_timestamp = k["recordingEnd"]
-    # calculate duration
-    # duration = int(recording_end_timestamp) - int(recording_start_timestamp)
-    # duration = time.strftime("%M:%S", time.gmtime(duration / 1000))
 
     # Read in the JSON data
     replay_dict = load_json_no_cache(basedir, replay_file)
@@ -345,33 +325,8 @@ def load_recording(basedir):
         st.error(f"Form file not found at {basedir}/form.json. This is likely an issue with Huggingface Spaces. Try cloning this repo and running locally.")
         st.stop()
 
-    # duration = replay_dict["data"][-1]["timestamp"] - replay_dict["data"][0]["timestamp"]
-    # duration = time.strftime("%M:%S", time.gmtime(duration))
-    # st.sidebar.markdown(f"**duration**: {duration}")
-
-    # if not replay_dict:
-    #     return None
-
-    # for key in [
-    #     "annotator",
-    #     "description",
-    #     "tasks",
-    #     "upload_date",
-    #     "instructor_sees_screen",
-    #     "uses_ai_generated_output",
-    # ]:
-    #     if form and key in form:
-    #         # Normalize the key to be more human-readable
-    #         key_name = key.replace("_", " ").title()
-
-    #         if type(form[key]) == list:
-    #             st.sidebar.markdown(f"**{key_name}**: {', '.join(form[key])}")
-    #         else:
-    #             st.sidebar.markdown(f"**{key_name}**: {form[key]}")
 
     st.sidebar.markdown("---")
-    # if replay_dict and "status" in replay_dict:
-    #     st.sidebar.markdown(f"**Validation status**: {replay_dict['status']}")
     
     processed_meta_path = Path(basedir).joinpath('processed_metadata.json')
     start_frame = 'file not found'
@@ -381,11 +336,6 @@ def load_recording(basedir):
             processed_meta = json.load(f)
         start_frame = processed_meta.get('start_frame', 'info not in file')
     
-    # st.sidebar.markdown(f"**Recording start frame**: {start_frame}")
-    
-    
-    # st.sidebar.button("Delete recording", type="primary", on_click=delete_recording, args=[basedir])
-
     data = replay_dict["data"]
     return data
 
@@ -400,22 +350,6 @@ def run():
         
         demo_names = os.listdir(demonstration_dir)
 
-        # def update_recording_name():
-        #     st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
-
-        # # For initial run, set the query parameter to the selected recording
-        # if not st.query_params.get("recording"):
-        #     update_recording_name()
-        
-        # recording_name = st.query_params.get("recording")
-        # if recording_name not in demo_names:
-        #     st.error(f"Recording `{recording_name}` not found. Please select another recording.")
-        #     st.stop()
-        
-        # recording_idx = demo_names.index(recording_name)
-        # st.sidebar.selectbox(
-        #     "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
-        # )
         dataset = st.sidebar.selectbox("Select Dataset", list(unique_data_dict.keys()))
         if dataset:
             demos = unique_data_dict[dataset]
@@ -425,13 +359,6 @@ def run():
             if demo_name:
                 turns = demos[demo_name]
                 selected_turn = st.sidebar.selectbox("Select Turn Number", sorted(turns))
-
-                # Display or process data based on selected turn
-                # st.write(f"Selected Dataset: {dataset}")
-                # st.write(f"Selected Demo: {demo_name}")
-                # st.write(f"Selected Turn: {selected_turn}")
-
-                
 
                 with st.sidebar:
                     # Want a dropdown
