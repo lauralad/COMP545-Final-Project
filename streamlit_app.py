@@ -44,6 +44,10 @@ def show_overview(data, recording_name, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
     st.header(f"Recording: `{recording_name}`")
 
+    # Find indices for instructor chat turns
+    instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
+    selected_turn_idx = st.sidebar.selectbox("Select Instructor Turn", instructor_turns)
+
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
     show_advanced_info = st.session_state.get("show_advanced_information", False)
 
@@ -56,10 +60,16 @@ def show_overview(data, recording_name, basedir):
 
     # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
     # screenshots = load_screenshots(data, basedir)
-    even_indices = [i for i in range(0, len(data), 2)]
-    selected_turn = st.sidebar.selectbox("Select Turn", even_indices)
 
-    turns_to_show = data[selected_turn:selected_turn+2]
+    # Determine range to display: from selected turn to the next instructor turn
+    next_turn_idx = selected_turn_idx + 1
+    while next_turn_idx < len(instructor_turns) and instructor_turns[next_turn_idx] == selected_turn_idx + 1:
+        next_turn_idx += 1
+    if next_turn_idx < len(instructor_turns):
+        turns_to_show = data[selected_turn_idx:instructor_turns[next_turn_idx]]
+    else:
+        turns_to_show = data[selected_turn_idx:]
+
     
     for i, d in enumerate(turns_to_show):
         # st.write(f"Turn index {selected_turn + i}, data: {d}")
