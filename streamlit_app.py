@@ -184,8 +184,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         col_act1.markdown("### True Answer")
         col_act2.markdown("### Model Prediction")
         
-        col_time.markdown("<br><br><br>", unsafe_allow_html=True)  # Adjust the number of <br> tags as needed
-        col_i.markdown("<br><br><br>", unsafe_allow_html=True)  
+        col_time.markdown("<br><br>", unsafe_allow_html=True)  # Adjust the number of <br> tags as needed
+        col_i.markdown("<br><br>", unsafe_allow_html=True)  
 
         secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
