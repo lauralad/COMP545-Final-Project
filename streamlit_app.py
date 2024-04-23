@@ -360,9 +360,9 @@ def run():
                 selected_turn = st.sidebar.selectbox("Select Turn Number", sorted(turns))
 
                 # Display or process data based on selected turn
-                st.write(f"Selected Dataset: {dataset}")
-                st.write(f"Selected Demo: {demo_name}")
-                st.write(f"Selected Turn: {selected_turn}")
+                # st.write(f"Selected Dataset: {dataset}")
+                # st.write(f"Selected Demo: {demo_name}")
+                # st.write(f"Selected Turn: {selected_turn}")
 
                 
 
@@ -391,6 +391,6 @@ def run():
 if __name__ == "__main__":
     install_playwright()
     setup_datasets()
-    st.write("unique tuples", unique_data_dict)
+    # st.write("unique tuples", unique_data_dict)
     # st.set_page_config(layout="wide")
     run()
