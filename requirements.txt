@@ -3,4 +3,5 @@ datasets
 huggingface_hub 
 weblinx 
 sentence_transformers 
-playwright
+# playwright
+selenium

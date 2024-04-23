@@ -6,6 +6,11 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+import os
+
 
 from utils import (
     load_json,
@@ -21,7 +26,9 @@ from utils import (
 def install_playwright():
     # Install Playwright and browsers
     # subprocess.run(["pip", "install", "playwright"], check=True)
-    subprocess.run(["playwright", "install"], check=True)
+    os.system('playwright install-deps')
+    # Install browsers used by Playwright
+    os.system('playwright install')
 
 def execute_browser_action(action):
     with sync_playwright() as p:
@@ -341,6 +348,6 @@ def run():
 
 
 if __name__ == "__main__":
-    # install_playwright()
+    install_playwright()
     st.set_page_config(layout="wide")
     run()
