@@ -38,7 +38,8 @@ unique_data_dict = {}
 
 @st.cache(allow_output_mutation=True)
 def load_and_prepare_data():
-    datasets = {}
+    global datasets
+    # datasets = {}
     unique_data_dict = {}
     for split in dataset_splits:
         datasets[split] = load_dataset("McGill-NLP/weblinx", split=split)
@@ -117,16 +118,16 @@ def show_selectbox(demonstration_dir):
     return recording_name
 
 
-def show_overview(data, recording_name, basedir):
+def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
-    st.header(f"Recording: `{recording_name}`")
+    st.header(f"Recording: `{dataset} > Demo {demo_name} > Turn {turn}`")
 
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
     # st.write(f"instructor_turns {instructor_turns}")
     # st.write(f"turn 5 {data[5]}")
-    selected_turn_idx = st.sidebar.selectbox("Select Instructor Turn", instructor_turns)
 
+    selected_turn_idx = turn #6
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
     show_advanced_info = st.session_state.get("show_advanced_information", False)
 
@@ -140,18 +141,17 @@ def show_overview(data, recording_name, basedir):
     # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
     # screenshots = load_screenshots(data, basedir)
 
-    # Find the next instructor turn index after the selected one
-    next_instructor_turn_idx = next((idx for idx in instructor_turns if idx > selected_turn_idx), None)
+    # Find the last instructor turn index before the selected turn index
+    previous_instructor_turn_idx = max([idx for idx in instructor_turns if idx < turn], default=None)
 
-    # Determine turns to show
-    if next_instructor_turn_idx:
-        turns_to_show = data[selected_turn_idx:next_instructor_turn_idx]
-    else:
-        # If there is no next instructor turn, display from the selected turn to the end of data
-        turns_to_show = data[selected_turn_idx:]
+    if previous_instructor_turn_idx is None:
+        st.write("No previous instructor turn found.")
+        return  # Exit the function if there's no previous instructor turn
 
-
-    for i, d in enumerate(turns_to_show):
+    for i in range(previous_instructor_turn_idx, turn + 1):
+        d = data[i]
+        st.write(f"Turn {i}: {d}")
+    # for i, d in enumerate(turns_to_show):
         # st.write(f"Turn index {selected_turn + i}, data: {d}")
 
 
@@ -161,8 +161,6 @@ def show_overview(data, recording_name, basedir):
         # print("index", i, "data", d)
         # st.write(f"index {i}, data {d}") #data
         
-
-
         if i > 0 and show_advanced_info:
             # Use html to add a horizontal line with minimal gap
             st.markdown(
@@ -174,7 +172,7 @@ def show_overview(data, recording_name, basedir):
             col_actvis = col_act
         else:
             col_time, col_i, col_act, col_actvis = st.columns(col_layout)
-        secs_from_start = d["timestamp"] - turns_to_show[0]["timestamp"] #data
+        secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
         col_time.markdown(
             f"**{datetime.utcfromtimestamp(secs_from_start).strftime('%M:%S')}**"
@@ -188,7 +186,7 @@ def show_overview(data, recording_name, basedir):
 
             col_i.download_button(
                 label="#" + str(i),
-                turns_to_show=load_page(page_path), #data
+                data=load_page(page_path), #data
                 file_name=recording_name + "-" + page_filename,
                 mime="multipart/related",
                 key=f"page{i}",
@@ -246,9 +244,9 @@ def load_recording(basedir):
     st.sidebar.checkbox(
         "Advanced Screenshot Info", False, key="show_advanced_information"
     )
-    st.sidebar.checkbox(
-        "Enable HTML download", False, key="enable_html_download"
-    )
+    # st.sidebar.checkbox(
+    #     "Enable HTML download", False, key="enable_html_download"
+    # )
     replay_file = replay_file.replace(".json", "")
     
     if not Path(basedir).joinpath('metadata.json').exists():
@@ -258,11 +256,11 @@ def load_recording(basedir):
     metadata = load_json_no_cache(basedir, "metadata")
 
     # convert timestamp to readable date string
-    recording_start_timestamp = metadata["recordingStart"]
-    recording_start_date = datetime.fromtimestamp(
-        int(recording_start_timestamp) / 1000
-    ).strftime("%Y-%m-%d %H:%M:%S")
-    st.sidebar.markdown(f"**started**: {recording_start_date}")
+    # recording_start_timestamp = metadata["recordingStart"]
+    # recording_start_date = datetime.fromtimestamp(
+    #     int(recording_start_timestamp) / 1000
+    # ).strftime("%Y-%m-%d %H:%M:%S")
+    # st.sidebar.markdown(f"**started**: {recording_start_date}")
 
     # recording_end_timestamp = k["recordingEnd"]
     # calculate duration
@@ -281,33 +279,33 @@ def load_recording(basedir):
         st.error(f"Form file not found at {basedir}/form.json. This is likely an issue with Huggingface Spaces. Try cloning this repo and running locally.")
         st.stop()
 
-    duration = replay_dict["data"][-1]["timestamp"] - replay_dict["data"][0]["timestamp"]
-    duration = time.strftime("%M:%S", time.gmtime(duration))
-    st.sidebar.markdown(f"**duration**: {duration}")
+    # duration = replay_dict["data"][-1]["timestamp"] - replay_dict["data"][0]["timestamp"]
+    # duration = time.strftime("%M:%S", time.gmtime(duration))
+    # st.sidebar.markdown(f"**duration**: {duration}")
 
-    if not replay_dict:
-        return None
+    # if not replay_dict:
+    #     return None
 
-    for key in [
-        "annotator",
-        "description",
-        "tasks",
-        "upload_date",
-        "instructor_sees_screen",
-        "uses_ai_generated_output",
-    ]:
-        if form and key in form:
-            # Normalize the key to be more human-readable
-            key_name = key.replace("_", " ").title()
+    # for key in [
+    #     "annotator",
+    #     "description",
+    #     "tasks",
+    #     "upload_date",
+    #     "instructor_sees_screen",
+    #     "uses_ai_generated_output",
+    # ]:
+    #     if form and key in form:
+    #         # Normalize the key to be more human-readable
+    #         key_name = key.replace("_", " ").title()
 
-            if type(form[key]) == list:
-                st.sidebar.markdown(f"**{key_name}**: {', '.join(form[key])}")
-            else:
-                st.sidebar.markdown(f"**{key_name}**: {form[key]}")
+    #         if type(form[key]) == list:
+    #             st.sidebar.markdown(f"**{key_name}**: {', '.join(form[key])}")
+    #         else:
+    #             st.sidebar.markdown(f"**{key_name}**: {form[key]}")
 
     st.sidebar.markdown("---")
-    if replay_dict and "status" in replay_dict:
-        st.sidebar.markdown(f"**Validation status**: {replay_dict['status']}")
+    # if replay_dict and "status" in replay_dict:
+    #     st.sidebar.markdown(f"**Validation status**: {replay_dict['status']}")
     
     processed_meta_path = Path(basedir).joinpath('processed_metadata.json')
     start_frame = 'file not found'
@@ -317,7 +315,7 @@ def load_recording(basedir):
             processed_meta = json.load(f)
         start_frame = processed_meta.get('start_frame', 'info not in file')
     
-    st.sidebar.markdown(f"**Recording start frame**: {start_frame}")
+    # st.sidebar.markdown(f"**Recording start frame**: {start_frame}")
     
     
     # st.sidebar.button("Delete recording", type="primary", on_click=delete_recording, args=[basedir])
@@ -336,23 +334,23 @@ def run():
         
         demo_names = os.listdir(demonstration_dir)
 
-        def update_recording_name():
-            st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
+        # def update_recording_name():
+        #     st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
 
-        # For initial run, set the query parameter to the selected recording
-        if not st.query_params.get("recording"):
-            update_recording_name()
+        # # For initial run, set the query parameter to the selected recording
+        # if not st.query_params.get("recording"):
+        #     update_recording_name()
         
-        recording_name = st.query_params.get("recording")
-        if recording_name not in demo_names:
-            st.error(f"Recording `{recording_name}` not found. Please select another recording.")
-            st.stop()
+        # recording_name = st.query_params.get("recording")
+        # if recording_name not in demo_names:
+        #     st.error(f"Recording `{recording_name}` not found. Please select another recording.")
+        #     st.stop()
         
-        recording_idx = demo_names.index(recording_name)
-        st.sidebar.selectbox(
-            "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
-        )
-        dataset = st.sidebar.selectbox("Select Dataset", list(unique_data_dict.keys()), on_change=update_recording_name)
+        # recording_idx = demo_names.index(recording_name)
+        # st.sidebar.selectbox(
+        #     "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
+        # )
+        dataset = st.sidebar.selectbox("Select Dataset", list(unique_data_dict.keys()))
         if dataset:
             demos = unique_data_dict[dataset]
             demo_name = st.sidebar.selectbox("Select Demo", list(demos.keys()))
@@ -363,9 +361,9 @@ def run():
                 selected_turn = st.sidebar.selectbox("Select Turn Number", sorted(turns))
 
                 # Display or process data based on selected turn
-                # st.write(f"Selected Dataset: {dataset}")
-                # st.write(f"Selected Demo: {demo_name}")
-                # st.write(f"Selected Turn: {selected_turn}")
+                st.write(f"Selected Dataset: {dataset}")
+                st.write(f"Selected Demo: {demo_name}")
+                st.write(f"Selected Turn: {selected_turn}")
 
                 
 
@@ -378,14 +376,14 @@ def run():
                         key="screenshot_size_view_mode",
                     )
 
-                if recording_name is not None:
+                if dataset is not None and demo_name is not None and selected_turn is not None:
+                    recording_name =  demo_name
                     basedir = f"{demonstration_dir}/{recording_name}"
                     data = load_recording(basedir=basedir)
 
-                    if not data:
-                        st.stop()
+                    data = unique_data_dict[dataset][demo_name][selected_turn]
 
-                    show_overview(data, recording_name=recording_name, basedir=basedir)
+                    show_overview(data, recording_name=recording_name,dataset=dataset, demo_name=demo_name, turn=selected_turn, basedir=basedir)
     finally:
         shutdown_browser()
     
