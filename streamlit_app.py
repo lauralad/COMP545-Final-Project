@@ -57,6 +57,7 @@ def show_overview(data, recording_name, basedir):
     # screenshots = load_screenshots(data, basedir)
 
     for i, d in enumerate(data):
+        print("index", i, "data", d)
         if i > 0 and show_advanced_info:
             # Use html to add a horizontal line with minimal gap
             st.markdown(
