@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-
+import subprocess
 import streamlit as st
 
 from utils import (
@@ -18,6 +18,10 @@ from utils import (
     load_page,
 )
 
+def install_playwright():
+    # Install Playwright and browsers
+    # subprocess.run(["pip", "install", "playwright"], check=True)
+    subprocess.run(["playwright", "install"], check=True)
 
 def show_selectbox(demonstration_dir):
     # find all the subdirectories in the current directory
@@ -46,7 +50,7 @@ def show_overview(data, recording_name, basedir):
 
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
-    st.write(f"instructor_turns {instructor_turns}")
+    # st.write(f"instructor_turns {instructor_turns}")
     # st.write(f"turn 5 {data[5]}")
     selected_turn_idx = st.sidebar.selectbox("Select Instructor Turn", instructor_turns)
 
@@ -314,5 +318,6 @@ def run():
 
 
 if __name__ == "__main__":
+    install_playwright()
     st.set_page_config(layout="wide")
     run()
