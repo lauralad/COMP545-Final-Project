@@ -34,26 +34,48 @@ dataset_splits = ["test_cat", "test_geo", "test", "test_vis", "test_web", "train
 datasets = {}
 unique_data_dict = {}
 
-def setup_datasets():
-    global datasets, unique_data_dict
+# @st.cache(allow_output_mutation=True)
+# def setup_datasets():
+#     global datasets, unique_data_dict
+#     for split in dataset_splits:
+#         datasets[split] = load_dataset("McGill-NLP/weblinx", split=split)
+
+#     for split, dataset in datasets.items():
+#         # Dictionary to store unique demos and their corresponding unique turn_nums and turns for current dataset
+#         unique_data_dict[split] = {}
+#         # Iterate through current dataset
+#         for turn in dataset:
+#             demo = turn["demo"]
+#             turn_num = turn["turn"]
+#             # Check if demo exists in unique_data_dict[split]
+#             if demo not in unique_data_dict[split]:
+#                 # If demo is not already in the dictionary, create a new dictionary for it
+#                 unique_data_dict[split][demo] = {}
+#             # Check if turn_num exists in unique_data_dict[split][demo]
+#             if turn_num not in unique_data_dict[split][demo]:
+#                 # If turn_num is not already in the dictionary, add it with the turn as the value
+#                 unique_data_dict[split][demo][turn_num] = turn
+@st.cache(allow_output_mutation=True)
+def load_and_prepare_data():
+    datasets = {}
+    unique_data_dict = {}
     for split in dataset_splits:
         datasets[split] = load_dataset("McGill-NLP/weblinx", split=split)
 
     for split, dataset in datasets.items():
-        # Dictionary to store unique demos and their corresponding unique turn_nums and turns for current dataset
         unique_data_dict[split] = {}
-        # Iterate through current dataset
         for turn in dataset:
             demo = turn["demo"]
             turn_num = turn["turn"]
-            # Check if demo exists in unique_data_dict[split]
             if demo not in unique_data_dict[split]:
-                # If demo is not already in the dictionary, create a new dictionary for it
                 unique_data_dict[split][demo] = {}
-            # Check if turn_num exists in unique_data_dict[split][demo]
             if turn_num not in unique_data_dict[split][demo]:
-                # If turn_num is not already in the dictionary, add it with the turn as the value
                 unique_data_dict[split][demo][turn_num] = turn
+    return unique_data_dict
+
+def setup_datasets():
+    global unique_data_dict
+    unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
     global playwright, browser, page
