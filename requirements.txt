@@ -4,7 +4,5 @@ huggingface_hub
 weblinx 
 sentence_transformers 
 playwright
-transformers
 # selenium
 Pillow
-torch
