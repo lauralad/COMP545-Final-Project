@@ -180,6 +180,9 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         cols = st.columns(col_layout)
         col_time, col_i, col_act1, col_act2 = cols  # Split into two action columns
         # col_time, col_i, col_act, col_actvis = st.columns(col_layout)
+        # Adding titles for each column
+        col_act1.markdown("### True Answer")
+        col_act2.markdown("### Model Prediction")
 
         secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
