@@ -1,228 +1,287 @@
-from quart import Quart, render_template, request, jsonify
-import asyncio
-from playwright.async_api import async_playwright
-import re
+from datetime import datetime
+import json
+import os
+import time
+from pathlib import Path
 
-app = Quart(__name__)
+import streamlit as st
 
-# actions_list = [
-#     "say(speaker='navigator', utterance='Sure.') load(url='http://encyclopedia.com/') click(uid='rcLink')</s><s>[INST]",
-#     "say(speaker='navigator', utterance='Sure.') click(href='/medicine')</s><s>[INST]"
-# ]
+from utils import (
+    load_json,
+    load_json_no_cache,
+    parse_arguments,
+    format_chat_message,
+    find_screenshot,
+    gather_chat_history,
+    get_screenshot,
+    load_page,
+)
 
-actions_list = ["say(speaker='navigator', utterance='Sure.') load(url='https://google.com/')</s><s>[INST]",
-                "say(speaker='navigator', utterance='Alright.') click(uid='#APjFqb') text_input(uid='APjFqb', text='wikipedia')</s><s>[INST]",
-                "say(speaker='navigator', utterance='Ok.') click(href='https://en.wikipedia.org/wiki/Main_Page')</s><s>[INST]",
-                "say(speaker='navigator', utterance='Ok.') click(name='search') text_input(name='search', text='McGill')</s><s>[INST]",
-                "say(speaker='navigator', utterance='Sure.') click(href=/wiki/McGill_University')</s><s>[INST]",
-                "say(speaker='navigator', utterance='McGill University was founded in 1821.') find(text='Founded in')</s><s>[INST]"
-                ]
 
-# Global variables for the browser and page instances
-browser_instance = None
-page_instance = None
+def show_selectbox(demonstration_dir):
+    # find all the subdirectories in the current directory
+    dirs = [
+        d
+        for d in os.listdir(demonstration_dir)
+        if os.path.isdir(f"{demonstration_dir}/{d}")
+    ]
 
-async def get_browser_page():
-    global browser_instance, page_instance
-    # Ensure the playwright and browser are started.
-    if browser_instance is None:
-        playwright = await async_playwright().start()
-        browser_instance = await playwright.chromium.launch(headless=False)
-    if page_instance is None or page_instance.is_closed():
-        page_instance = await browser_instance.new_page()
+    if not dirs:
+        st.title("No recordings found.")
+        return None
 
-async def close_browser():
-    global browser_instance
-    if browser_instance is not None:
-        await browser_instance.close()
-        browser_instance = None
+    # sort by date
+    dirs.sort(key=lambda x: os.path.getmtime(f"{demonstration_dir}/{x}"), reverse=True)
 
-async def perform_web_action(action_type, params):
-    global page_instance, browser_instance
-    
-    if action_type == "click":
-        if 'uid' in params and params['uid']:
-            xpath = f"{params['uid']}" #add # for id after video
-            print(f"Attempting to locate element with ID: {xpath}")
-            await page_instance.wait_for_selector(xpath, state="visible")
-            print("Element found. Attempting to click.")
-            await page_instance.click(xpath)
-            
-        # If params specify a 'href', use it as an href selector
-        elif 'href' in params and params['href']:
-            href_selector = f"a[href='{params['href']}']"
-            print(f"Attempting to locate element with href: {params['href']}")
-            await page_instance.wait_for_selector(href_selector, state="visible")
-            print("Element found. Attempting to click.")
-            await page_instance.click(href_selector)
-        elif 'name' in params and params['name']:
-            name_selector = f"input[name='{params['name']}']"
-            print(f"Attempting to locate element with name: {params['name']}")
-            await page_instance.wait_for_selector(name_selector, state="visible")
-            print("Element found. Attempting to click.")
-            await page_instance.click(name_selector)
-        
-        print("Click action completed successfully.")
+    # offer the user a dropdown to select which recording to visualize, set a default
+    recording_name = st.sidebar.selectbox("Recording", dirs, index=0)
 
-    elif action_type == "load":
-        await page_instance.goto(params['url'])
+    return recording_name
 
-    elif action_type == "scroll":
-        # Note: Playwright does not directly support scroll to x, y. You may need to execute custom JavaScript.
-        await page_instance.evaluate(f"window.scrollTo({params['x']}, {params['y']})")
 
-    elif action_type == "submit":
-        # Assuming the uid is the form element or a submit button within the form
-        form_xpath = f"//*[@id='{params['uid']}']"
-        await page_instance.wait_for_selector(form_xpath, state="visible", timeout=60000)
-        # Triggering form submission
-        await page_instance.evaluate(f"document.querySelector('{form_xpath}').submit();")
+def show_overview(data, recording_name, basedir):
+    st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
+    st.header(f"Recording: `{recording_name}`")
 
-    elif action_type == "text_input":
-        # input_selector = "input.searchbox.form-search.form-input"
-        # print("in text input if")
-        if 'name' in params and params['name']:
-            xpath = f"input[name='{params['name']}']"
+    screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
+    show_advanced_info = st.session_state.get("show_advanced_information", False)
+
+    if screenshot_size == "regular":
+        col_layout = [1.5, 1.5, 7, 3.5]
+    elif screenshot_size == "small":
+        col_layout = [1.5, 1.5, 7, 2]
+    else:  # screenshot_size == 'large'
+        col_layout = [1.5, 1.5, 11]
+
+    # col_i, col_time, col_act, col_actvis = st.columns(col_layout)
+    # screenshots = load_screenshots(data, basedir)
+
+    for i, d in enumerate(data):
+        if i > 0 and show_advanced_info:
+            # Use html to add a horizontal line with minimal gap
+            st.markdown(
+                "<hr style='margin-top: 0.1rem; margin-bottom: 0.1rem;'/>",
+                unsafe_allow_html=True,
+            )
+        if screenshot_size == "large":
+            col_time, col_i, col_act = st.columns(col_layout)
+            col_actvis = col_act
         else:
-            xpath = f"#{params['uid']}"
-        await page_instance.locator(xpath).click(force=True)
-        print("clicked!")
-        # Wait for the input element to become visible
-        # await page_instance.wait_for_selector(input_selector, state="visible", timeout=5000)
+            col_time, col_i, col_act, col_actvis = st.columns(col_layout)
+        secs_from_start = d["timestamp"] - data[0]["timestamp"]
+        # `secs_from_start` is a float including ms, display in MM:SS.mm format
+        col_time.markdown(
+            f"**{datetime.utcfromtimestamp(secs_from_start).strftime('%M:%S')}**"
+        )
         
-        await page_instance.fill(xpath, params['text'])
-        await page_instance.keyboard.press('Enter')
+        if not st.session_state.get("enable_html_download", True):
+            col_i.markdown(f"**#{i}**")
+        
+        elif d["type"] == "browser" and (page_filename := d["state"]["page"]):
+            page_path = f"{basedir}/pages/{page_filename}"
 
-        print(f"Filled the input field ({xpath}) with text: {params['text']}")
+            col_i.download_button(
+                label="#" + str(i),
+                data=load_page(page_path),
+                file_name=recording_name + "-" + page_filename,
+                mime="multipart/related",
+                key=f"page{i}",
+            )
+        else:
+            col_i.button(f"#{i}", type='secondary')
+
+        if d["type"] == "chat":
+            col_act.markdown(format_chat_message(d), unsafe_allow_html=True)
+            continue
+
+        # screenshot_filename = d["state"]["screenshot"]
+        img = get_screenshot(d, basedir)
+        arguments = parse_arguments(d["action"])
+        event_type = d["action"]["intent"]
+
+        action_str = f"**{event_type}**({arguments})"
+
+        if img:
+            col_actvis.image(img)
+        
+        col_act.markdown(action_str)
+
+        if show_advanced_info:
+            status = d["state"].get("screenshot_status", "unknown")
+
+            text = ""
+            if status == "good":
+                text += f'**:green[Used in demo]**\n\n'
+            text += f'Screenshot: `{d["state"]["screenshot"]}`\\\n'
+            text += f'Page: `{d["state"]["page"]}`\n'
+
+            col_act.markdown(text)
 
 
-    elif action_type == "change":
-        # Assuming 'change' refers to changing the value of an input element
-        input_xpath = f"//*[@id='{params['uid']}']"
-        await page_instance.fill(input_xpath, params['value'])
-
-    elif action_type == "find":
-        # New logic to highlight text on the page
-        if 'text' in params and params['text'] == "Founded in":
-            script = """
-            const paragraphs = Array.from(document.querySelectorAll('p'));
-            paragraphs.forEach(paragraph => {
-                const regex = /(Founded in )(\d{4})/gi;
-                paragraph.innerHTML = paragraph.innerHTML.replace(regex, (match, prefix, year) => {
-                    return prefix + `<span style="background-color: yellow; font-weight: bold;">${year}</span>`;
-                });
-            });
-            """
-            await page_instance.evaluate(script)
-            print("Year highlighting completed.")
-
-
-def parse_model_output(output):
-    actions = re.findall(r"(\w+)\(([^)]+)\)", output)
-    parsed_actions = []
-    for action in actions:
-        action_type, params_str = action
-        params = dict(re.findall(r'(\w+)=["\']?([^"\']+)["\']?', params_str))
-        parsed_actions.append((action_type, params))
-    return parsed_actions
-
-@app.route("/")
-async def index():
-    return await render_template("index.html")
-
-@app.route("/get", methods=["GET"])
-async def get_bot_response_route():
-    global page_instance
-    user_text = request.args.get('msg')
-    await get_browser_page()
+def load_recording(basedir):
+    # Before loading replay, we need a dropdown that allows us to select replay.json or replay_orig.json
+    # Find all files in basedir starting with "replay" and ending with ".json"
+    replay_files = sorted(
+        [
+            f
+            for f in os.listdir(basedir)
+            if f.startswith("replay") and f.endswith(".json")
+        ]
+    )
+    replay_file = st.sidebar.selectbox("Select replay", replay_files, index=0)
+    st.sidebar.checkbox(
+        "Advanced Screenshot Info", False, key="show_advanced_information"
+    )
+    st.sidebar.checkbox(
+        "Enable HTML download", False, key="enable_html_download"
+    )
+    replay_file = replay_file.replace(".json", "")
     
-    if user_text.lower() in ["hello", "hi", "good afternoon"]:
-        response = "Hi there! How can I help you?"
-    else:
-        model_output = actions_list.pop(0) if actions_list else "say(speaker='navigator', utterance='I am sorry, I am not sure how to respond to that.')"
-        actions = parse_model_output(model_output)
-
-        response = ""
-        for action_type, params in actions:
-            print("taking action:", action_type, params)
-            await perform_web_action(action_type, params)
-            if action_type == "say":
-                response += params.get("utterance", "") + " "
+    if not Path(basedir).joinpath('metadata.json').exists():
+        st.error(f"Metadata file not found at {basedir}/metadata.json. This is likely an issue with Huggingface Spaces. Try cloning this repo and running locally.")
+        st.stop()
     
-    return jsonify(response)
+    metadata = load_json_no_cache(basedir, "metadata")
 
-# @app.before_serving
-# async def startup():
-#     await get_browser_page()
+    # convert timestamp to readable date string
+    recording_start_timestamp = metadata["recordingStart"]
+    recording_start_date = datetime.fromtimestamp(
+        int(recording_start_timestamp) / 1000
+    ).strftime("%Y-%m-%d %H:%M:%S")
+    st.sidebar.markdown(f"**started**: {recording_start_date}")
 
-@app.after_serving
-async def cleanup():
-    await close_browser()
+    # recording_end_timestamp = k["recordingEnd"]
+    # calculate duration
+    # duration = int(recording_end_timestamp) - int(recording_start_timestamp)
+    # duration = time.strftime("%M:%S", time.gmtime(duration / 1000))
+
+    # Read in the JSON data
+    replay_dict = load_json_no_cache(basedir, replay_file)
+    form = load_json_no_cache(basedir, "form")
+    
+    if replay_dict is None:
+        st.error(f"Replay file not found at {basedir}/{replay_file}. This is likely an issue with Huggingface Spaces. Try cloning this repo and running locally.")
+        st.stop()
+    
+    if form is None:
+        st.error(f"Form file not found at {basedir}/form.json. This is likely an issue with Huggingface Spaces. Try cloning this repo and running locally.")
+        st.stop()
+
+    duration = replay_dict["data"][-1]["timestamp"] - replay_dict["data"][0]["timestamp"]
+    duration = time.strftime("%M:%S", time.gmtime(duration))
+    st.sidebar.markdown(f"**duration**: {duration}")
+
+    if not replay_dict:
+        return None
+
+    for key in [
+        "annotator",
+        "description",
+        "tasks",
+        "upload_date",
+        "instructor_sees_screen",
+        "uses_ai_generated_output",
+    ]:
+        if form and key in form:
+            # Normalize the key to be more human-readable
+            key_name = key.replace("_", " ").title()
+
+            if type(form[key]) == list:
+                st.sidebar.markdown(f"**{key_name}**: {', '.join(form[key])}")
+            else:
+                st.sidebar.markdown(f"**{key_name}**: {form[key]}")
+
+    st.sidebar.markdown("---")
+    if replay_dict and "status" in replay_dict:
+        st.sidebar.markdown(f"**Validation status**: {replay_dict['status']}")
+    
+    processed_meta_path = Path(basedir).joinpath('processed_metadata.json')
+    start_frame = 'file not found'
+    
+    if processed_meta_path.exists():
+        with open(processed_meta_path) as f:
+            processed_meta = json.load(f)
+        start_frame = processed_meta.get('start_frame', 'info not in file')
+    
+    st.sidebar.markdown(f"**Recording start frame**: {start_frame}")
+    
+    
+    # st.sidebar.button("Delete recording", type="primary", on_click=delete_recording, args=[basedir])
+
+    data = replay_dict["data"]
+    return data
+
+
+def run():
+    # mode = st.sidebar.radio("Mode", ["Overview"])
+    demonstration_dir = "./demonstrations"
+
+    # # params = st.experimental_get_query_params()
+    # params = st.query_params
+    # print(params)
+    
+    # # list demonstrations/
+    # demo_names = os.listdir(demonstration_dir)
+
+    # if params.get("recording"):
+    #     if isinstance(params["recording"], list):
+    #         recording_name = params["recording"][0]
+    #     else:
+    #         recording_name = params["recording"]
+
+    # else:
+    #     recording_name = demo_names[0]
+    
+    # recording_name = st.sidebar.selectbox(
+    #     "Recordings",
+    #     demo_names,
+    #     index=demo_names.index(recording_name),
+    # )
+
+    # if recording_name != params.get("recording", [None])[0]:
+    #     # st.experimental_set_query_params(recording=recording_name)
+    #     # use st.query_params as a dict instead
+    #     st.query_params['recording'] = recording_name
+
+
+    demo_names = os.listdir(demonstration_dir)
+
+    def update_recording_name():
+        st.query_params["recording"] = st.session_state.get("recording_name", demo_names[0])
+
+    # For initial run, set the query parameter to the selected recording
+    if not st.query_params.get("recording"):
+        update_recording_name()
+    
+    recording_name = st.query_params.get("recording")
+    if recording_name not in demo_names:
+        st.error(f"Recording `{recording_name}` not found. Please select another recording.")
+        st.stop()
+    
+    recording_idx = demo_names.index(recording_name)
+    st.sidebar.selectbox(
+        "Recordings", demo_names, on_change=update_recording_name, key="recording_name", index=recording_idx
+    )
+
+    with st.sidebar:
+        # Want a dropdown
+        st.selectbox(
+            "Screenshot size",
+            ["small", "regular", "large"],
+            index=1,
+            key="screenshot_size_view_mode",
+        )
+
+    if recording_name is not None:
+        basedir = f"{demonstration_dir}/{recording_name}"
+        data = load_recording(basedir=basedir)
+
+        if not data:
+            st.stop()
+
+        show_overview(data, recording_name=recording_name, basedir=basedir)
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
-
-
-
-# async def perform_web_action(action_type, params):
-#     global page_instance, browser_instance
-#     # if not page_instance:
-#     #     page_instance = await get_browser_page()
-    
-#     if action_type == "click":
-#         xpath = f"#{params['uid']}"
-#         print(f"Attempting to locate element with XPath: {xpath}")
-#         await page_instance.wait_for_selector(xpath, state="visible")
-#         print("Element found. Attempting to click.")
-#         await page_instance.click(xpath)
-#         print("Click action completed successfully.")
-
-#     elif action_type == "load":
-#         await page_instance.goto(params['url'])
-#         # body_html = await page_instance.evaluate("() => document.body.innerHTML")
-
-#         # # Save to a text file
-#         # with open('templates/body_content.txt', 'w', encoding='utf-8') as file:
-#         #     file.write(body_html)
-
-#         # full_html = await page_instance.evaluate("() => document.documentElement.outerHTML")
-
-#         # # Save to a text file
-#         # with open('templates/full_document_content.txt', 'w', encoding='utf-8') as file:
-#         #     file.write(full_html)
-#         # await handle_cookie_popup(page_instance)
-#         # # If needed, wait a bit after closing the popup to ensure the page_instance stabilizes
-#         # await page_instance.wait_for_timeout(1000)
-#         # page_instance_content = await page_instance.content()
-#         # print("page_instance content loaded:", page_instance_content)
-
-#     elif action_type == "scroll":
-#         # Note: Playwright does not directly support scroll to x, y. You may need to execute custom JavaScript.
-#         await page_instance.evaluate(f"window.scrollTo({params['x']}, {params['y']})")
-
-#     elif action_type == "submit":
-#         # Assuming the uid is the form element or a submit button within the form
-#         form_xpath = f"//*[@id='{params['uid']}']"
-#         await page_instance.wait_for_selector(form_xpath, state="visible", timeout=60000)
-#         # Triggering form submission
-#         await page_instance.evaluate(f"document.querySelector('{form_xpath}').submit();")
-
-#     elif action_type == "text_input":
-#         # input_selector = "input.searchbox.form-search.form-input"
-#         # print("in text input if")
-#         xpath = f"#{params['uid']}"
-#         await page_instance.locator(xpath).click(force=True)
-#         print("clicked!")
-#         # Wait for the input element to become visible
-#         # await page_instance.wait_for_selector(input_selector, state="visible", timeout=5000)
-        
-#         await page_instance.fill(xpath, params['text'])
-
-#         print(f"Filled the input field ({xpath}) with text: {params['text']}")
-
-
-#     elif action_type == "change":
-#         # Assuming 'change' refers to changing the value of an input element
-#         input_xpath = f"//*[@id='{params['uid']}']"
-#         await page_instance.fill(input_xpath, params['value'])
+    st.set_page_config(layout="wide")
+    run()
