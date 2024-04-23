@@ -6,9 +6,9 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+# from selenium import webdriver
+# from selenium.webdriver.chrome.options import Options
+# from webdriver_manager.chrome import ChromeDriverManager
 import os
 
 
