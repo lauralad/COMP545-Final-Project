@@ -73,9 +73,9 @@ def shutdown_browser():
 def install_playwright():
     # Install Playwright and browsers
     # subprocess.run(["pip", "install", "playwright"], check=True)
-    os.system('sudo -S playwright install-deps')
+    os.system('playwright install-deps')
     # Install browsers used by Playwright
-    os.system('sudo -S playwright install')
+    os.system('playwright install')
 
 def execute_browser_action(action):
     
