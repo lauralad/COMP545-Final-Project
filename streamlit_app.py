@@ -183,8 +183,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # Adding titles for each column
         col_act1.markdown("### True Answer")
         col_act2.markdown("### Model Prediction")
-        col_time.write("")
-        col_i.write("")
+        col_time.write("\n")
+        col_i.write("\n")
 
         secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
