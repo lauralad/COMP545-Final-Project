@@ -185,8 +185,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
             )
       
         if i == 0:
-            col_time.markdown("<br><br>", unsafe_allow_html=True)  # Add this to align the first item with the titles
-            col_i.markdown("<br><br>", unsafe_allow_html=True) 
+            col_time.markdown("<br><br><br>", unsafe_allow_html=True)  # Add this to align the first item with the titles
+            col_i.markdown("<br><br><br>", unsafe_allow_html=True) 
         
         
         secs_from_start = d["timestamp"] - data[0]["timestamp"] #data
