@@ -11,7 +11,9 @@ import streamlit as st
 # from selenium.webdriver.chrome.options import Options
 # from webdriver_manager.chrome import ChromeDriverManager
 import os
-
+import torch
+from transformers import pipeline
+from huggingface_hub import snapshot_download
 
 from utils import (
     load_json,
@@ -35,7 +37,8 @@ page = None
 dataset_splits = ["validation"]
 datasets = {}
 unique_data_dict = {}
-
+action_model = None
+template = None
 
 @st.cache(allow_output_mutation=True)
 def load_and_prepare_data():
@@ -55,6 +58,38 @@ def load_and_prepare_data():
             if turn_num not in unique_data_dict[split][demo]:
                 unique_data_dict[split][demo][turn_num] = turn
     return unique_data_dict
+
+def init_model():
+    global action_model, template
+    # Ensure the right device is used (CPU or CUDA)
+    device = 0 if torch.cuda.is_available() else -1
+
+    # Download templates
+    snapshot_download(
+        "McGill-NLP/WebLINX", repo_type="dataset", allow_patterns="templates/*", local_dir="."
+    )
+
+    # Load the template
+    with open('templates/llama.txt') as f:
+        template = f.read()
+
+    # Load the model
+    action_model = pipeline(
+        model="McGill-NLP/Sheared-LLaMA-2.7B-weblinx", device=device, torch_dtype='auto'
+    )
+
+def get_pred_for_turn(split, demo, turn_num):
+    turn = unique_data_dict[split][demo][turn_num]
+    turn_formatted = template.format(**turn)
+
+    out = action_model(turn_formatted, return_full_text=False, max_new_tokens=64, truncation=True)
+    pred = out[0]['generated_text']
+
+    closing_paren_index = pred.find(')')
+    substring = pred[:closing_paren_index + 1]  # Include the closing parenthesis
+    print("substring:", substring, "correct:", turn["action"])
+    pred_cleaned = substring.strip()
+    return pred_cleaned
 
 def setup_datasets():
     global unique_data_dict
@@ -174,6 +209,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     col_act1.markdown("### True Answer")
     col_act2.markdown("### Model Prediction")
 
+    predicted_action_str = get_pred_for_turn(dataset, demo_name, turn)
+    st.write(f"Predicted Action: {predicted_action_str}")
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
         
@@ -243,7 +280,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
-        col_act2.markdown(action_str)
+        col_act2.markdown(predicted_action_str)
 
         if show_advanced_info:
             status = d["state"].get("screenshot_status", "unknown")
