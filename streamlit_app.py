@@ -59,6 +59,7 @@ def load_and_prepare_data():
                 unique_data_dict[split][demo][turn_num] = turn
     return unique_data_dict
 
+@st.cache(allow_output_mutation=True)
 def init_model():
     global action_model, template
     # Ensure the right device is used (CPU or CUDA)
