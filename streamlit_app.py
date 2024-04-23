@@ -143,6 +143,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
     # Find the last instructor turn index before the selected turn index
     previous_instructor_turn_idx = max([idx for idx in instructor_turns if idx < turn], default=None)
+    
 
     if previous_instructor_turn_idx is None:
         st.write("No previous instructor turn found.")
@@ -150,7 +151,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
-        st.write(f"Turn {i}: {d}")
+        # st.write(f"Turn {i}: {d}")
     # for i, d in enumerate(turns_to_show):
         # st.write(f"Turn index {selected_turn + i}, data: {d}")
 
@@ -361,9 +362,9 @@ def run():
                 selected_turn = st.sidebar.selectbox("Select Turn Number", sorted(turns))
 
                 # Display or process data based on selected turn
-                st.write(f"Selected Dataset: {dataset}")
-                st.write(f"Selected Demo: {demo_name}")
-                st.write(f"Selected Turn: {selected_turn}")
+                # st.write(f"Selected Dataset: {dataset}")
+                # st.write(f"Selected Demo: {demo_name}")
+                # st.write(f"Selected Turn: {selected_turn}")
 
                 
 
