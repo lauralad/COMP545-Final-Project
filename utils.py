@@ -58,8 +58,11 @@ def load_image(image_file):
 
 
 @st.cache_resource
+# def load_page(page_path):
+#     return open(page_path, "rb")
 def load_page(page_path):
-    return open(page_path, "rb")
+    with open(page_path, "r", encoding='utf-8') as file:  # Ensure the file is read as text
+        return file.read()
 
 
 def shorten(s):

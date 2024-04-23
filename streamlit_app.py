@@ -66,12 +66,13 @@ def setup_browser():
     browser = playwright.chromium.launch(headless=True)
     page = browser.new_page()
 
+
 def load_html_content(html_content):
+    """Loads the given HTML content in the Playwright page."""
     # Convert HTML content to a data URL
     encoded_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
     data_url = f"data:text/html;base64,{encoded_html}"
     page.goto(data_url)
-    
 
 def shutdown_browser():
     if browser:
@@ -192,8 +193,11 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         elif d["type"] == "browser" and (page_filename := d["state"]["page"]):
             page_path = f"{basedir}/pages/{page_filename}"
-            html_page = load_page(page_path)
-            load_html_content(html_page)
+            html_content = load_page(page_path)
+            load_html_content(html_content)
+
+            # html_page = load_page(page_path)
+            # load_html_content(html_page)
             page.screenshot(path="screenshot.png")
 
             col_i.download_button(
