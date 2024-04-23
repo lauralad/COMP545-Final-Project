@@ -36,7 +36,7 @@ def execute_browser_action(action):
         page = browser.new_page()
         
         if action['intent'] == 'load':
-            page.goto(action['arguments']['url'])
+            page.goto(action['arguments']['metadata']['url'])
         elif action['intent'] == 'click':
             page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
         elif action['intent'] == 'textInput':
