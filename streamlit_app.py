@@ -341,6 +341,6 @@ def run():
 
 
 if __name__ == "__main__":
-    install_playwright()
+    # install_playwright()
     st.set_page_config(layout="wide")
     run()
