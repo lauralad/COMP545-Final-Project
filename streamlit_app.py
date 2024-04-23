@@ -321,8 +321,7 @@ def load_recording(basedir):
 
 
 def run():
-    setup_datasets()
-    st.write("unique tuples", datasets)
+    
     # print("splits", datasets)
     setup_browser()
     try:
@@ -372,5 +371,7 @@ def run():
 
 if __name__ == "__main__":
     install_playwright()
+    setup_datasets()
+    st.write("unique tuples", unique_tuples_dict)
     # st.set_page_config(layout="wide")
     run()
