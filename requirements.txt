@@ -5,3 +5,4 @@ weblinx
 sentence_transformers 
 playwright
 # selenium
+Pillow

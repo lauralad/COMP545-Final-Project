@@ -3,7 +3,7 @@ import json
 import os
 import time
 from pathlib import Path
-from tkinter import Image
+from PIL import Image
 from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
