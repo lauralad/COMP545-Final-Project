@@ -205,8 +205,9 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     col_act1.markdown("### True Answer")
     col_act2.markdown("### Model Prediction")
 
-    predicted_action_str = get_pred_for_turn(dataset, demo_name, turn)
-    st.write(f"Predicted Action: {predicted_action_str}")
+    # predicted_action_str = get_pred_for_turn(dataset, demo_name, turn)
+    # st.write(f"Predicted Action: {predicted_action_str}")
+
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
         
@@ -276,7 +277,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
-        col_act2.markdown(predicted_action_str)
+        col_act2.markdown(action_str)#predicted_action_str
 
         if show_advanced_info:
             status = d["state"].get("screenshot_status", "unknown")
