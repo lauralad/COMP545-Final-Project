@@ -331,7 +331,7 @@ def run():
         )
 
     if recording_name is not None:
-        basedir = f"./wl_data/{demonstration_dir}/{recording_name}"
+        basedir = f"{demonstration_dir}/{recording_name}"
         data = load_recording(basedir=basedir)
 
         if not data:
