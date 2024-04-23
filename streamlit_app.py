@@ -322,7 +322,8 @@ def load_recording(basedir):
 
 def run():
     setup_datasets()
-    print("splits", datasets)
+    st.write("unique tuples", datasets)
+    # print("splits", datasets)
     setup_browser()
     try:
     
