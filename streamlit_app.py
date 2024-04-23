@@ -69,7 +69,7 @@ def show_overview(data, recording_name, basedir):
 
         # select turn (dropdown) d -> true, pred
         # print("index", i, "data", d)
-        st.write(f"index {i}, data {d}")
+        st.write(f"index {i}, data {d}") #data
         
 
 
@@ -84,7 +84,7 @@ def show_overview(data, recording_name, basedir):
             col_actvis = col_act
         else:
             col_time, col_i, col_act, col_actvis = st.columns(col_layout)
-        secs_from_start = d["timestamp"] - data[0]["timestamp"]
+        secs_from_start = d["timestamp"] - turns_to_show[0]["timestamp"] #data
         # `secs_from_start` is a float including ms, display in MM:SS.mm format
         col_time.markdown(
             f"**{datetime.utcfromtimestamp(secs_from_start).strftime('%M:%S')}**"
@@ -98,7 +98,7 @@ def show_overview(data, recording_name, basedir):
 
             col_i.download_button(
                 label="#" + str(i),
-                data=load_page(page_path),
+                turns_to_show=load_page(page_path), #data
                 file_name=recording_name + "-" + page_filename,
                 mime="multipart/related",
                 key=f"page{i}",
