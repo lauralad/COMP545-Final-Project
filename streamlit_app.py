@@ -276,8 +276,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # execute_browser_action(d['action'])
         # screenshot_path = execute_browser_action(d['action'])
         if screenshot_path:
-            img = Image.open(screenshot_path)
-            col_act2.image(img, caption="Screenshot after action")
+            imgg = Image.open(screenshot_path)
+            col_act2.image(imgg, caption="Screenshot after action")
         if img:
             col_act1.image(img)
         
