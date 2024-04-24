@@ -114,6 +114,26 @@ def extract_non_say_actions(df, demo_name, turn_number):
     # actions = re.findall(r'(?<!say)\(.*?\)', action_history)
     actions = re.findall(r'\b(?!say\b)\w+\(.*?\)', action_history)
     return actions
+
+def get_browser_actions_up_to_turn(data, demo_name, turn_number):
+    # Initialize an empty list to store browser actions
+    browser_actions = []
+
+    # Loop through each entry in the data up to and including the specified turn
+    for i, d in enumerate(data[demo_name]):
+        # Stop collecting once you pass the desired turn number
+        if i > turn_number:
+            break
+        # Check if the entry is of type 'browser'
+        if d["type"] == "browser":
+            # Parse the action arguments and get the event type
+            arguments = parse_arguments(d["action"])
+            event_type = d["action"]["intent"]
+            
+            # Append the action information as a tuple or dictionary
+            browser_actions.append((event_type, arguments))
+    st.write(browser_actions)
+    return browser_actions
     
 def parse_action_details(action):
     # This function will parse an action string and return the necessary details for Playwright
@@ -250,7 +270,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
     # Find the last instructor turn index before the selected turn index
     previous_instructor_turn_idx = max([idx for idx in instructor_turns if idx < turn], default=None)
-    
+    browser_actions = get_browser_actions_up_to_turn(data, demo_name, turn)
 
     if previous_instructor_turn_idx is None:
         st.write("No previous instructor turn found.")
@@ -388,7 +408,6 @@ def load_recording(basedir):
     #get first element of replay_dict
     
 
-    st.write(replay_dict.keys())
     form = load_json_no_cache(basedir, "form")
     
     if replay_dict is None:
