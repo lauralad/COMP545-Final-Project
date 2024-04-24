@@ -338,7 +338,7 @@ def execute_browser_actions(browser_actions):
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
-            st.write(args['element'])
+            st.write(args)
             elem_html = args['element']['outerHTML']
             element_id, element_classes = extract_attributes(elem_html)
             st.write(f"Element ID: {element_id}")
