@@ -10,3 +10,5 @@ pandas
 transformers
 torch
 beautifulsoup4
+jellyfish
+numpy
