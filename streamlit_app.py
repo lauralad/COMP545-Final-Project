@@ -113,7 +113,8 @@ def extract_non_say_actions(df, demo_name, turn_number):
     
     action_history = row['action_history']
     # Regex to find non-"say" actions
-    actions = re.findall(r'(?<!say)\(.*?\)', action_history)
+    # actions = re.findall(r'(?<!say)\(.*?\)', action_history)
+    actions = re.findall(r'\b(?!say\b)\w+\(.*?\)', action_history)
     return actions
     
 
