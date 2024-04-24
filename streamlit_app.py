@@ -28,6 +28,7 @@ import re
 import torch
 from transformers import pipeline
 from huggingface_hub import snapshot_download
+from weblinx.processing import load_candidate_elements
 
 # Global variables
 action_model = None
@@ -42,6 +43,7 @@ datasets = {}
 unique_data_dict = {}
 cleaned_data = [] #json of preds
 data_mapping = {}
+valid_candidates_list = load_candidate_elements("./wl_data/candidates/valid.jsonl")
 
 def init_model():
     global action_model, template
@@ -74,6 +76,30 @@ def get_pred_for_turn(split, demo, turn_num):
     substring = pred[:closing_paren_index + 1]
     pred_cleaned = substring.strip()
     return pred_cleaned
+
+#new function that can grab the uid out of a string
+def extract_uid(action):
+    action_pattern = re.compile(r'\b\w+\(.*?\buid="([\w-]+)"\)')
+    uid_match = action_pattern.search(action)
+    if uid_match:
+        return uid_match.group(1)
+    else:
+        return None
+    
+def translate_pred(uid, demo, turn):
+    turn_cands = valid_candidates_list[(demo, int(turn))]
+    pred_uid = uid
+    pred_xpath = None
+    pred_class = None
+    for i in turn_cands:
+        if i['uid'] == pred_uid:
+            pred_xpath = i["elem_dict"]["xpath"]
+            pattern = r"class='([^']+)'"
+            elem_attributes = i["elem_dict"]["attributes"]
+            pred_class = re.search(pattern, elem_attributes).group(1)
+    return pred_class, pred_xpath
+
+
 
 @st.cache(allow_output_mutation=True)
 def load_and_prepare_data():
@@ -120,7 +146,8 @@ def clean_json_file(file_path):
         substring = item[:closing_paren_index + 1]
         # Strip leading/trailing whitespace and reduce any internal excess whitespace
         cleaned_item = ' '.join(substring.split())
-        cleaned_data.append(cleaned_item)
+        action_type = re.match(r"^(.*?)\(", cleaned_item).group(1)
+        cleaned_data.append([cleaned_item, action_type])
     return cleaned_data
 
 def load_csv_data(file_path):
@@ -130,13 +157,24 @@ def load_csv_data(file_path):
 
 def create_mapping(json_data, csv_df):
     global data_mapping
+    global pred_map
+    i = 0
     for index, row in csv_df.iterrows():
         demo_name = row['demo']
         turn_number = row['turn']
         key = f"{demo_name}_{turn_number}"  # Create a string key
         data_mapping[key] = index
-
-    return data_mapping
+        pred_action = json_data[i][0]
+        pred_action_type = json_data[i][1]
+        pred_uid = extract_uid(pred_action)
+        pred_cand = None
+        if pred_uid != None:
+            pred_cand = translate_pred(uid=pred_uid, demo=demo_name, turn=turn_number)
+        pred_map[(demo_name, turn_number)] = [pred_action, pred_action_type, pred_uid, pred_cand]
+        i += 1
+        
+        
+    return pred_map, data_mapping
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -179,23 +217,29 @@ def parse_action_details(action):
         }
     return {}
 
-# def setup_datasets():
+def setup_datasets():
+    global unique_data_dict, cleaned_data, data_mapping
+    file_path = './valid_predictions.json'
+    # clean_json_file has been updated to return not just the action, but also the action type of that action, if you need it.
+    #format is [pred_action, pred_action's type]
+    cleaned_data = clean_json_file(file_path)
+    csv_df = load_csv_data("./valid.csv")
+    # create_mapping now returns pred_map as well. This object SHOULD be a dictionary that has information for every turn's predicted information in valid. 
+    # pred_map is a dictionary, where the key is (demo_name, turn_num), and 
+    # the value is a list: [predicted_action, predicted_action's type, predicted_action's uid (if available), [predicted candidate's class, predicted candidate's xpath] (if available)]
+    # pred_map should be used to get the info that you need for the specific demo_name and turn_num that you need when selected.
+    pred_map, data_mapping = create_mapping(cleaned_data, csv_df)
+    unique_data_dict = load_and_prepare_data()
+
+# def setup_datasets(model_name):
 #     global unique_data_dict, cleaned_data, data_mapping
-#     file_path = './valid_predictions.json'
+#     if model_name == "2.7B":
+#         file_path = "./experiment_data/llama2_7_valid_correct.json"
+#     else: file_path = "./experiment_data/llama1_3_valid_correct.json"
 #     cleaned_data = clean_json_file(file_path)
 #     csv_df = load_csv_data("./valid.csv")
 #     data_mapping = create_mapping(cleaned_data, csv_df)
 #     unique_data_dict = load_and_prepare_data()
-
-def setup_datasets(model_name):
-    global unique_data_dict, cleaned_data, data_mapping
-    if model_name == "2.7B":
-        file_path = "./experiment_data/llama2_7_valid_correct.json"
-    else: file_path = "./experiment_data/llama1_3_valid_correct.json"
-    cleaned_data = clean_json_file(file_path)
-    csv_df = load_csv_data("./valid.csv")
-    data_mapping = create_mapping(cleaned_data, csv_df)
-    unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
     global playwright, browser, page
@@ -450,7 +494,7 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         if i == turn:
             key = f"{demo_name}_{turn}"
             pred_idx = data_mapping[key]
-            pred_action = cleaned_data[pred_idx]
+            pred_action = cleaned_data[0][pred_idx]
             col_act2.markdown(pred_action)
             # col_act2.markdown(action_str)
         else:
