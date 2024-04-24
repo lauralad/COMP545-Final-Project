@@ -20,7 +20,7 @@ from utils import (
     
 )
 
-from playwright.sync_api import sync_playwright, Playwright, Browser
+from playwright.sync_api import sync_playwright, Playwright, Browser, TimeoutError
 from datasets import load_dataset
 import base64
 import pandas as pd
@@ -344,8 +344,32 @@ def execute_browser_actions(browser_actions):
             st.write(f"Element ID: {element_id}")
             st.write(f"Element Classes: {element_classes}")
             # xpath_expression = f"xpath=//{class_name}"
-            if element_id:
-                page.click(f"#{element_id}")  # CSS ID selector
+            try:
+                # First try clicking by ID
+                if element_id:
+                    page.click(f"#{element_id}")
+                    print(f"Clicked using ID: #{element_id}")
+                else:
+                    raise TimeoutError("No ID provided, trying class selectors.")
+
+            except TimeoutError as e:
+                print(f"Failed to click using ID: {str(e)}")
+                # If ID click fails, try clicking by class
+                for class_name in element_classes:
+                    try:
+                        page.click(f".{class_name}")
+                        print(f"Clicked using class: .{class_name}")
+                        break
+                    except TimeoutError:
+                        print(f"Failed to click using class: .{class_name}")
+                        continue
+                else:
+                    print("All class selectors failed.")
+
+            # Optional: Wait to observe the effects
+            # page.wait_for_timeout(1000)
+            # if element_id:
+            #     page.click(f"#{element_id}")  # CSS ID selector
             # Using the locator with the XPath to click the element
             # page.locator(xpath_expression).click()
             # page.click(f".{class_name}")
