@@ -229,7 +229,7 @@ def execute_action(action):
     if action['intent'] == 'load':
         page.goto(action['arguments']['metadata']['url'])
     elif action['intent'] == 'click':
-        page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
+        page.click(action['arguments']['element']['attributes']['class'])  # assuming xpath is always available
     elif action['intent'] == 'textInput':
         page.fill(action['arguments']['element']['xpath'], action['text'])
     elif action['intent'] == 'paste':
@@ -376,7 +376,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # Do the action in the browser
         # execute_browser_action(d['action'])
         # parse_action_details(d['action'])
-        st.write(f"action {d['action']['arguments']['element']}")
+        # st.write(f"action {d['action']}")
         screenshot_path = execute_action(d['action'])
         if screenshot_path:
             imgg = Image.open(screenshot_path)
