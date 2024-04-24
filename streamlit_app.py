@@ -509,7 +509,12 @@ def run():
     # print("splits", datasets)
     setup_browser()
     try:
-    
+        model_choice = st.sidebar.selectbox(
+            "Choose a model:",
+            ["llama1.3B", "llama2.7B"],
+            index=0  # Default selection
+        )
+        # st.sidebar.write(f"You have selected the model: {model_choice}")
         demonstration_dir = "./wl_data/demonstrations"
         
         demo_names = os.listdir(demonstration_dir)
