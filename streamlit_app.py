@@ -92,19 +92,6 @@ def create_mapping(json_data, csv_df):
 
     return data_mapping
 
-def setup_datasets():
-    global unique_data_dict, cleaned_data, data_mapping
-    file_path = './valid_predictions.json'
-    cleaned_data = clean_json_file(file_path)
-    # st.write(cleaned_data)
-    csv_df = load_csv_data("./valid.csv")
-    # st.write(csv_df)
-    data_mapping = create_mapping(cleaned_data, csv_df)
-    # st.write(data_mapping)
-    unique_data_dict = load_and_prepare_data()
-    actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
-    st.write(actions_history)
-
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -117,6 +104,34 @@ def extract_non_say_actions(df, demo_name, turn_number):
     actions = re.findall(r'\b(?!say\b)\w+\(.*?\)', action_history)
     return actions
     
+def parse_action_details(action):
+    # This function will parse an action string and return the necessary details for Playwright
+    # For example: load(url="https://www.encyclopedia.com/")
+    # Assuming the format is always function_name(argument="value")
+    match = re.match(r'(\w+)\((\w+)="([^"]+)"\)', action)
+    if match:
+        return {
+            'function': match.group(1),
+            'argument': match.group(2),
+            'value': match.group(3)
+        }
+    return {}
+
+def setup_datasets():
+    global unique_data_dict, cleaned_data, data_mapping
+    file_path = './valid_predictions.json'
+    cleaned_data = clean_json_file(file_path)
+    # st.write(cleaned_data)
+    csv_df = load_csv_data("./valid.csv")
+    # st.write(csv_df)
+    data_mapping = create_mapping(cleaned_data, csv_df)
+    # st.write(data_mapping)
+    unique_data_dict = load_and_prepare_data()
+    actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
+    st.write(actions_history)
+    details_list = [parse_action_details(action) for action in actions_history]
+    st.write(details_list)
+
 
 def setup_browser():
     global playwright, browser, page
