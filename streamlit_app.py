@@ -92,6 +92,17 @@ def create_mapping(json_data, csv_df):
 
     return data_mapping
 
+def get_xpath_for_uid(df, uid):
+    # Assuming the dataframe is already loaded with valid.csv
+    # We search for the uid in the 'candidates' field and extract the xpath
+    for index, row in df.iterrows():
+        if uid in row['candidates']:
+            parts = row['candidates'].split(', ')
+            for part in parts:
+                if uid in part:
+                    xpath = part.split('[[xpath]] ')[1].split(' ')[0]
+                    return xpath
+    return None
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -127,10 +138,10 @@ def setup_datasets():
     data_mapping = create_mapping(cleaned_data, csv_df)
     # st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
-    actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
-    st.write(actions_history)
-    details_list = [parse_action_details(action) for action in actions_history]
-    st.write(details_list)
+    # actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
+    # st.write(actions_history)
+    # details_list = [parse_action_details(action) for action in actions_history]
+    # st.write(details_list)
 
 
 def setup_browser():
@@ -160,21 +171,29 @@ def install_playwright():
     # Install browsers used by Playwright
     os.system('playwright install')
 
-def execute_browser_action(action):
+def execute_browser_action(details):
     
     screenshot_path = "screenshot.png"
     
-    if action['intent'] == 'load':
-        page.goto(action['arguments']['metadata']['url'])
-    elif action['intent'] == 'click':
-        page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
-    elif action['intent'] == 'textInput':
-        page.fill(action['arguments']['element']['xpath'], action['text'])
-    elif action['intent'] == 'paste':
-        # Simulate paste action (Playwright doesn't have a direct paste method)
-        page.type(action['arguments']['element']['xpath'], action['pasted'])
-    elif action['intent'] == 'submit':
-        page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
+    if details['function'] == 'load' and details['argument'] == 'url':
+        page.goto(details['value'])  # Load the URL specified
+    elif details['function'] == 'click' and details['argument'] == 'uid':
+        # Here you would need the xpath corresponding to the UID
+        xpath = get_xpath_for_uid(df, details['value'])  # Assume function defined earlier
+        if xpath:
+            page.click(xpath)
+
+    # if action['intent'] == 'load':
+    #     page.goto(action['arguments']['metadata']['url'])
+    # elif action['intent'] == 'click':
+    #     page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
+    # elif action['intent'] == 'textInput':
+    #     page.fill(action['arguments']['element']['xpath'], action['text'])
+    # elif action['intent'] == 'paste':
+    #     # Simulate paste action (Playwright doesn't have a direct paste method)
+    #     page.type(action['arguments']['element']['xpath'], action['pasted'])
+    # elif action['intent'] == 'submit':
+    #     page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
     page.screenshot(path=screenshot_path)
     
     return screenshot_path
@@ -208,6 +227,11 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
     # st.write(f"instructor_turns {instructor_turns}")
     # st.write(f"turn 5 {data[5]}")
+
+    actions_history = extract_non_say_actions(unique_data_dict['validation'], demo_name=demo_name, turn_number=turn)
+    st.write(actions_history)
+    details_list = [parse_action_details(action) for action in actions_history]
+    st.write(details_list)
 
     selected_turn_idx = turn #6
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
