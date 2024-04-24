@@ -21,6 +21,7 @@ from utils import (
     gather_chat_history,
     get_screenshot,
     load_page,
+    
 )
 
 from playwright.sync_api import sync_playwright, Playwright, Browser
@@ -115,6 +116,7 @@ def extract_non_say_actions(df, demo_name, turn_number):
     actions = re.findall(r'\b(?!say\b)\w+\(.*?\)', action_history)
     return actions
 
+
 def get_browser_actions_up_to_turn(data, demo_name, turn_number):
     # Initialize an empty list to store browser actions
     browser_actions = []
@@ -199,7 +201,7 @@ def execute_browser_action(details):
         page.goto(details['value'])  # Load the URL specified
     elif details['function'] == 'click' and details['argument'] == 'uid':
         # Here you would need the xpath corresponding to the UID
-        xpath = get_xpath_for_uid(df, details['value'])  # Assume function defined earlier
+        xpath = get_xpath_for_uid(unique_data_dict, details['value'])  # Assume function defined earlier
         if xpath:
             page.click(xpath)
 

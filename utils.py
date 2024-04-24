@@ -142,6 +142,7 @@ def parse_arguments(action):
     return ", ".join(s)
 
 
+
 @st.cache_resource(max_entries=50_000, ttl=CACHE_TTL)
 def create_visualization(_img, event_type, bbox, x, y, screenshot_path):
     # screenshot_path is not used, but we need it for caching since we can't cache
