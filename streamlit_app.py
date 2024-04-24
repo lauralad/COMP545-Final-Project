@@ -542,6 +542,7 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         if i == turn:
             key = f"{demo_name}_{turn}"
             pred_idx = data_mapping[key]
+            #might be messed up
             pred_action = cleaned_data[0][pred_idx]
             col_act2.markdown(pred_action)
             # col_act2.markdown(action_str)
