@@ -4,12 +4,8 @@ import os
 import time
 from pathlib import Path
 from PIL import Image
-# from playwright.sync_api import sync_playwright
 import subprocess
 import streamlit as st
-# from selenium import webdriver
-# from selenium.webdriver.chrome.options import Options
-# from webdriver_manager.chrome import ChromeDriverManager
 import os
 
 from utils import (
@@ -80,11 +76,6 @@ def load_csv_data(file_path):
 
 def create_mapping(json_data, csv_df):
     global data_mapping
-    # Create a DataFrame linking JSON entries to demo and turn info
-    # Ensure we do not exceed the length of json_data
-    # min_length = min(len(json_data), len(csv_df))
-    # csv_df = csv_df.head(min_length)
-    # csv_df['cleaned_data'] = json_data[:min_length]
     for index, row in csv_df.iterrows():
         demo_name = row['demo']
         turn_number = row['turn']
@@ -92,18 +83,6 @@ def create_mapping(json_data, csv_df):
         data_mapping[key] = index
 
     return data_mapping
-
-def get_xpath_for_uid(df, uid):
-    # Assuming the dataframe is already loaded with valid.csv
-    # We search for the uid in the 'candidates' field and extract the xpath
-    for index, row in df.iterrows():
-        if uid in row['candidates']:
-            parts = row['candidates'].split(', ')
-            for part in parts:
-                if uid in part:
-                    xpath = part.split('[[xpath]] ')[1].split(' ')[0]
-                    return xpath
-    return None
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -137,9 +116,6 @@ def get_browser_actions_up_to_turn(data, demo_name, turn_number):
     return browser_actions
     
 def parse_action_details(action):
-    # This function will parse an action string and return the necessary details for Playwright
-    # For example: load(url="https://www.encyclopedia.com/")
-    # Assuming the format is always function_name(argument="value")
     match = re.match(r'(\w+)\((\w+)="([^"]+)"\)', action)
     if match:
         return {
@@ -184,33 +160,6 @@ def install_playwright():
     os.system('playwright install-deps')
     # Install browsers used by Playwright
     os.system('playwright install')
-
-def execute_browser_action(details):
-    
-    screenshot_path = "screenshot.png"
-    
-    if details['function'] == 'load' and details['argument'] == 'url':
-        page.goto(details['value'])  # Load the URL specified
-    elif details['function'] == 'click' and details['argument'] == 'uid':
-        # Here you would need the xpath corresponding to the UID
-        xpath = get_xpath_for_uid(unique_data_dict, details['value'])  # Assume function defined earlier
-        if xpath:
-            page.click(xpath)
-
-    # if action['intent'] == 'load':
-    #     page.goto(action['arguments']['metadata']['url'])
-    # elif action['intent'] == 'click':
-    #     page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
-    # elif action['intent'] == 'textInput':
-    #     page.fill(action['arguments']['element']['xpath'], action['text'])
-    # elif action['intent'] == 'paste':
-    #     # Simulate paste action (Playwright doesn't have a direct paste method)
-    #     page.type(action['arguments']['element']['xpath'], action['pasted'])
-    # elif action['intent'] == 'submit':
-    #     page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
-    page.screenshot(path=screenshot_path)
-    
-    return screenshot_path
 
 def execute_action(action):
     
@@ -303,6 +252,10 @@ def execute_browser_actions(browser_actions):
             st.write(f"Clicked at ({x}, {y})")
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
+        # elif intent == "paste":
+        #     class_name = args['element']['attributes']['class']
+        #     page.click(f".{class_name}")
+        #     page.fill
 
     
     
@@ -383,11 +336,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         elif d["type"] == "browser" and (page_filename := d["state"]["page"]):
             page_path = f"{basedir}/pages/{page_filename}"
-            # html_content = load_page(page_path)
-            # load_html_content(html_content)
 
-            # html_page = load_page(page_path)
-            # load_html_content(html_page)
             page.screenshot(path="screenshot.png")
 
             col_i.download_button(
@@ -415,11 +364,6 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         event_type = d["action"]["intent"]
 
         action_str = f"**{event_type}**({arguments})"
-
-        # Do the action in the browser
-        # execute_browser_action(d['action'])
-        # parse_action_details(d['action'])
-        # st.write(f"action {d['action']}")
         screenshot_path = execute_action(d)
         if screenshot_path:
             imgg = Image.open(screenshot_path)
@@ -452,8 +396,6 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
 
 def load_recording(basedir):
-    # Before loading replay, we need a dropdown that allows us to select replay.json or replay_orig.json
-    # Find all files in basedir starting with "replay" and ending with ".json"
     replay_files = sorted(
         [
             f
