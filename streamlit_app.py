@@ -134,7 +134,6 @@ def get_browser_actions_up_to_turn(data, demo_name, turn_number):
             
             # Append the action information as a tuple or dictionary
             browser_actions.append((event_type, arguments))
-    # st.write(browser_actions)
     return browser_actions
     
 def parse_action_details(action):
@@ -154,16 +153,9 @@ def setup_datasets():
     global unique_data_dict, cleaned_data, data_mapping
     file_path = './valid_predictions.json'
     cleaned_data = clean_json_file(file_path)
-    # st.write(cleaned_data)
     csv_df = load_csv_data("./valid.csv")
-    # st.write(csv_df)
     data_mapping = create_mapping(cleaned_data, csv_df)
-    # st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
-    # actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
-    # st.write(actions_history)
-    # details_list = [parse_action_details(action) for action in actions_history]
-    # st.write(details_list)
 
 
 def setup_browser():
@@ -418,6 +410,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         img = get_screenshot(d, basedir)
         arguments = parse_arguments(d["action"])
         # st.write(f"parsed arguments {arguments}")
+
 
         event_type = d["action"]["intent"]
 
