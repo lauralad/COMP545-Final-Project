@@ -175,18 +175,25 @@ def execute_action(action):
     elif intent == 'click':
         x = args['metadata']['mouseX']
         y = args['metadata']['mouseY']
-        page.evaluate('''({x, y}) => {
-                    const rect = document.createElement('div');
-                    rect.style.position = 'absolute';
-                    rect.style.border = '3px solid red';
-                    rect.style.width = '10px';
-                    rect.style.height = '10px';
-                    rect.style.left = `${x - 5}px`;
-                    rect.style.top = `${y - 5}px`;
-                    rect.style.pointerEvents = 'none';
-                    rect.style.zIndex = '9999';
-                    document.body.appendChild(rect);
-        }''', {'x': x, 'y': y})
+        page.evaluate('''
+            ({x, y}) => {
+                const rect = document.createElement('div');
+                rect.style.position = 'absolute';
+                rect.style.border = '3px solid red';
+                rect.style.width = '30px';  // Increased size
+                rect.style.height = '30px';  // Increased size
+                rect.style.left = `${x - 15}px`;  // Adjusting position to center the square
+                rect.style.top = `${y - 15}px`;  // Adjusting position to center the square
+                rect.style.pointerEvents = 'none';
+                rect.style.zIndex = '9999';
+                document.body.appendChild(rect);
+
+                // Remove the square after 1000 ms
+                setTimeout(() => {
+                    document.body.removeChild(rect);
+                }, 1000);
+            }
+        ''', {'x': x, 'y': y})
         page.mouse.click(x, y)
         st.write(f"Clicked at ({x}, {y})")
         
