@@ -385,6 +385,10 @@ def load_recording(basedir):
 
     # Read in the JSON data
     replay_dict = load_json_no_cache(basedir, replay_file)
+    #get first element of replay_dict
+    
+
+    st.write(replay_dict.keys())
     form = load_json_no_cache(basedir, "form")
     
     if replay_dict is None:
