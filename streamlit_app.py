@@ -272,7 +272,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     # st.write(f"turn 5 {data[5]}")
 
     actions_history = extract_non_say_actions(unique_data_dict['validation'], demo_name=demo_name, turn_number=turn)
-    st.write(actions_history)
+    # st.write(actions_history)
     details_list = [parse_action_details(action) for action in actions_history]
     for details in details_list:
         screens = execute_browser_action(details)
