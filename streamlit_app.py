@@ -134,7 +134,7 @@ def get_browser_actions_up_to_turn(data, demo_name, turn_number):
             
             # Append the action information as a tuple or dictionary
             browser_actions.append((event_type, arguments))
-    st.write(browser_actions)
+    # st.write(browser_actions)
     return browser_actions
     
 def parse_action_details(action):
