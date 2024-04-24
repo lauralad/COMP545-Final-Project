@@ -26,6 +26,7 @@ from utils import (
 from playwright.sync_api import sync_playwright, Playwright, Browser
 from datasets import load_dataset
 import base64
+import pandas as pd
 
 playwright: Playwright = None
 browser: Browser = None
@@ -34,7 +35,8 @@ page = None
 dataset_splits = ["validation"]
 datasets = {}
 unique_data_dict = {}
-
+cleaned_data = [] #json of preds
+data_mapping = {}
 
 @st.cache(allow_output_mutation=True)
 def load_and_prepare_data():
@@ -55,10 +57,40 @@ def load_and_prepare_data():
                 unique_data_dict[split][demo][turn_num] = turn
     return unique_data_dict
 
+def clean_json_file(file_path):
+    # Read the JSON data from file
+    with open(file_path, 'r') as file:
+        pred_data = json.load(file)
 
+    # Clean up each string in the list
+    cleaned_data = []
+    for item in pred_data:
+        # Strip leading/trailing whitespace and reduce any internal excess whitespace
+        cleaned_item = ' '.join(item.split())
+        cleaned_data.append(cleaned_item)
+
+    return cleaned_data
+
+def load_csv_data(file_path):
+    # Read the CSV using Pandas and extract demo names and turn numbers
+    df = pd.read_csv(file_path)
+    return df[['demo', 'turn']]
+
+def create_mapping(json_data, csv_df):
+    # Create a DataFrame linking JSON entries to demo and turn info
+    # Ensure we do not exceed the length of json_data
+    min_length = min(len(json_data), len(csv_df))
+    csv_df = csv_df.head(min_length)
+    csv_df['cleaned_data'] = json_data[:min_length]
+    return csv_df
 
 def setup_datasets():
-    global unique_data_dict
+    global unique_data_dict, cleaned_data,data_mapping
+    file_path = './valid_predictions.json'
+    cleaned_data = clean_json_file(file_path)
+    csv_df = load_csv_data("./valid.csv")
+    data_mapping = create_mapping(cleaned_data, csv_df)
+    st.write(data_mapping[0])
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():

@@ -6,3 +6,4 @@ sentence_transformers
 playwright
 # selenium
 Pillow
+pandas
