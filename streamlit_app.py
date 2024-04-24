@@ -73,8 +73,11 @@ def clean_json_file(file_path):
 
 def load_csv_data(file_path):
     # Read the CSV using Pandas and extract demo names and turn numbers
-    df = pd.read_csv(file_path)
-    return df[['demo', 'turn']]
+    pred_df = pd.read_csv(file_path)
+    # for index, row in df.iterrows():
+    #     turn_number = row['turn']
+    #     data_mapping[turn_number] = index
+    return pred_df[['demo', 'turn']]
 
 def create_mapping(json_data, csv_df):
     # Create a DataFrame linking JSON entries to demo and turn info
@@ -89,6 +92,7 @@ def setup_datasets():
     file_path = './valid_predictions.json'
     cleaned_data = clean_json_file(file_path)
     csv_df = load_csv_data("./valid.csv")
+    st.write(csv_df)
     data_mapping = create_mapping(cleaned_data, csv_df)
     st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
@@ -272,7 +276,11 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
-        col_act2.markdown(action_str)#predicted_action_str
+        if i == turn:
+            pred_action = "hi"
+            col_act2.markdown(action_str)
+        else:
+            col_act2.markdown(action_str)#predicted_action_str
 
         if show_advanced_info:
             status = d["state"].get("screenshot_status", "unknown")
