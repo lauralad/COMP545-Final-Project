@@ -109,9 +109,9 @@ def setup_datasets():
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
     # Retrieve the row based on demo_name and turn_number
-    row = df[(df['demo'] == demo_name) & (df['turn'] == turn_number)]
+    row = df[demo_name][turn_number]
     if not row.empty:
-        action_history = row['action_history'].values[0]
+        action_history = row['action_history']
         # Regex to find non-"say" actions
         actions = re.findall(r'(?<!say)\(.*?\)', action_history)
         return actions
