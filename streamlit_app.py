@@ -94,18 +94,33 @@ def load_and_prepare_data():
                 unique_data_dict[split][demo][turn_num] = turn
     return unique_data_dict
 
+# def clean_json_file(file_path):
+#     # Read the JSON data from file
+#     with open(file_path, 'r') as file:
+#         pred_data = json.load(file)
+
+#     # Clean up each string in the list
+#     cleaned_data = []
+#     for item in pred_data:
+#         # Strip leading/trailing whitespace and reduce any internal excess whitespace
+#         cleaned_item = ' '.join(item.split())
+#         cleaned_data.append(cleaned_item)
+
+#     return cleaned_data
+
 def clean_json_file(file_path):
     # Read the JSON data from file
     with open(file_path, 'r') as file:
         pred_data = json.load(file)
-
     # Clean up each string in the list
     cleaned_data = []
     for item in pred_data:
+        #grab first action only
+        closing_paren_index = item.find(')')
+        substring = item[:closing_paren_index + 1]
         # Strip leading/trailing whitespace and reduce any internal excess whitespace
-        cleaned_item = ' '.join(item.split())
+        cleaned_item = ' '.join(substring.split())
         cleaned_data.append(cleaned_item)
-
     return cleaned_data
 
 def load_csv_data(file_path):
@@ -300,13 +315,15 @@ def execute_browser_actions(browser_actions):
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
-            class_name = args['element']['attributes']['class']
-            page.click(f".{class_name}")
-            page.fill
+            class_name = args['element']['attributes']['xpath']
+            xpath_expression = f"xpath=//{class_name}"
+
+            # Using the locator with the XPath to click the element
+            page.locator(xpath_expression).click()
+            # page.click(f".{class_name}")
+            page.fill()
 
     
-    
-
 
 def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
