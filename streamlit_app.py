@@ -120,7 +120,7 @@ def get_browser_actions_up_to_turn(data, demo_name, turn_number):
     browser_actions = []
 
     # Loop through each entry in the data up to and including the specified turn
-    for i, d in enumerate(data[demo_name]):
+    for i, d in enumerate(data):
         # Stop collecting once you pass the desired turn number
         if i > turn_number:
             break
