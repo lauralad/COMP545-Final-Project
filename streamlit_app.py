@@ -73,19 +73,21 @@ def clean_json_file(file_path):
 
 def load_csv_data(file_path):
     # Read the CSV using Pandas and extract demo names and turn numbers
-    df = pd.read_csv(file_path)
-    for index, row in df.iterrows():
-        turn_number = row['turn']
-        data_mapping[turn_number] = index
-    # return pred_df[['demo', 'turn']]
+    pred_df = pd.read_csv(file_path)
+    return pred_df[['demo', 'turn']]
 
 def create_mapping(json_data, csv_df):
+    global data_mapping
     # Create a DataFrame linking JSON entries to demo and turn info
     # Ensure we do not exceed the length of json_data
-    min_length = min(len(json_data), len(csv_df))
-    csv_df = csv_df.head(min_length)
-    csv_df['cleaned_data'] = json_data[:min_length]
-    return csv_df
+    # min_length = min(len(json_data), len(csv_df))
+    # csv_df = csv_df.head(min_length)
+    # csv_df['cleaned_data'] = json_data[:min_length]
+    for index, row in csv_df.iterrows():
+        turn_number = row['turn']
+        data_mapping[turn_number] = index
+
+    return data_mapping
 
 def setup_datasets():
     global unique_data_dict, cleaned_data, data_mapping
@@ -93,7 +95,7 @@ def setup_datasets():
     cleaned_data = clean_json_file(file_path)
     # st.write(cleaned_data)
     csv_df = load_csv_data("./valid.csv")
-    # st.write(csv_df)
+    st.write(csv_df)
     data_mapping = create_mapping(cleaned_data, csv_df)
     st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
@@ -278,9 +280,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
         if i == turn:
-            pred_idx = data_mapping[turn]
-            pred_action = cleaned_data[pred_idx]
-            col_act2.markdown(pred_action)
+            pred_action = "hi"
+            col_act2.markdown(action_str)
         else:
             col_act2.markdown(action_str)#predicted_action_str
 
