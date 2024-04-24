@@ -93,9 +93,9 @@ def setup_datasets():
     global unique_data_dict, cleaned_data, data_mapping
     file_path = './valid_predictions.json'
     cleaned_data = clean_json_file(file_path)
-    # st.write(cleaned_data)
+    st.write(cleaned_data)
     csv_df = load_csv_data("./valid.csv")
-    st.write(csv_df)
+    # st.write(csv_df)
     data_mapping = create_mapping(cleaned_data, csv_df)
     st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
