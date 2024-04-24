@@ -84,8 +84,9 @@ def create_mapping(json_data, csv_df):
     # csv_df = csv_df.head(min_length)
     # csv_df['cleaned_data'] = json_data[:min_length]
     for index, row in csv_df.iterrows():
+        demo_name = row['demo']
         turn_number = row['turn']
-        data_mapping[turn_number] = index
+        data_mapping[(demo_name, turn_number)] = index
 
     return data_mapping
 
