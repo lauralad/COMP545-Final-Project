@@ -324,8 +324,8 @@ def execute_browser_actions(browser_actions):
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
-            st.write(args['element']['attributes'])
-            class_name = args['element']['attributes']['xpath']
+            st.write(args['element'])
+            class_name = args['element']['xpath']
             xpath_expression = f"xpath=//{class_name}"
 
             # Using the locator with the XPath to click the element
