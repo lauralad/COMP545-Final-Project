@@ -376,7 +376,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # Do the action in the browser
         # execute_browser_action(d['action'])
         # parse_action_details(d['action'])
-        st.write(f"action {d['action']['arguments']['metadata']}")
+        st.write(f"action {d['action']['arguments']['element']}")
         screenshot_path = execute_action(d['action'])
         if screenshot_path:
             imgg = Image.open(screenshot_path)
