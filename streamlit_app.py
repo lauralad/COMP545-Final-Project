@@ -25,6 +25,13 @@ from datasets import load_dataset
 import base64
 import pandas as pd
 import re
+import torch
+from transformers import pipeline
+from huggingface_hub import snapshot_download
+
+# Global variables
+action_model = None
+template = None
 
 playwright: Playwright = None
 browser: Browser = None
@@ -35,6 +42,38 @@ datasets = {}
 unique_data_dict = {}
 cleaned_data = [] #json of preds
 data_mapping = {}
+
+def init_model():
+    global action_model, template
+
+    # Ensure the right device is used (CPU or CUDA)
+    device = 0 if torch.cuda.is_available() else -1
+
+    # Download templates
+    snapshot_download(
+        "McGill-NLP/WebLINX", repo_type="dataset", allow_patterns="templates/*", local_dir="."
+    )
+
+    # Load the template
+    with open('templates/llama.txt') as f:
+        template = f.read()
+
+    # Load the model
+    action_model = pipeline(
+        model="McGill-NLP/Sheared-LLaMA-2.7B-weblinx", device=device, torch_dtype='auto'
+    )
+
+def get_pred_for_turn(split, demo, turn_num):
+    turn = unique_data_dict[split][demo][turn_num]
+    turn_formatted = template.format(**turn)
+    # action_model is the llama model of choice
+    out = action_model(turn_formatted, return_full_text=False, 
+                       max_new_tokens=64, truncation=True)
+    pred = out[0]['generated_text']
+    closing_paren_index = pred.find(')')
+    substring = pred[:closing_paren_index + 1]
+    pred_cleaned = substring.strip()
+    return pred_cleaned
 
 @st.cache(allow_output_mutation=True)
 def load_and_prepare_data():
@@ -501,6 +540,7 @@ def run():
     
 
 if __name__ == "__main__":
+    # init_model()
     install_playwright()
     setup_datasets()
     # st.write("unique tuples", unique_data_dict)

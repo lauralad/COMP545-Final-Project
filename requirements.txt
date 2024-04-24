@@ -7,3 +7,5 @@ playwright
 # selenium
 Pillow
 pandas
+transformers
+torch
