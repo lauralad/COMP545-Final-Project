@@ -236,9 +236,21 @@ def execute_action(action):
         y = args['metadata']['mouseY']
         page.mouse.click(x, y)
         st.write(f"Clicked at ({x}, {y})")
+        page.evaluate('''({x, y}) => {
+                    const rect = document.createElement('div');
+                    rect.style.position = 'absolute';
+                    rect.style.border = '3px solid red';
+                    rect.style.width = '10px';
+                    rect.style.height = '10px';
+                    rect.style.left = `${x - 5}px`;
+                    rect.style.top = `${y - 5}px`;
+                    rect.style.pointerEvents = 'none';
+                    rect.style.zIndex = '9999';
+                    document.body.appendChild(rect);
+        }''', {'x': x, 'y': y})
         # print(f"Clicked at ({x}, {y})")
         page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
-
+    page.screenshot(path=screenshot_path)
     # if action['intent'] == 'load':
     #     page.goto(action['arguments']['metadata']['url'])
     # elif action['intent'] == 'click':
