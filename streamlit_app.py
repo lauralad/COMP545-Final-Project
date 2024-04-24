@@ -86,7 +86,8 @@ def create_mapping(json_data, csv_df):
     for index, row in csv_df.iterrows():
         demo_name = row['demo']
         turn_number = row['turn']
-        data_mapping[(str(demo_name), str(turn_number))] = index
+        key = f"{demo_name}_{turn_number}"  # Create a string key
+        data_mapping[key] = index
 
     return data_mapping
 
@@ -281,7 +282,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
         if i == turn:
-            pred_idx = data_mapping[turn]
+            key = f"{demo_name}_{turn}"
+            pred_idx = data_mapping[key]
             pred_action = cleaned_data[pred_idx]
             col_act2.markdown(pred_action)
             # col_act2.markdown(action_str)
