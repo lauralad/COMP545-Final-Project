@@ -208,6 +208,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     # Adding titles for each column
     col_act1.markdown("### True Answer")
     col_act2.markdown("### Model Prediction")
+    col_time.markdown("<br><br><br>", unsafe_allow_html=True)  # Add this to align the first item with the titles
+    col_i.markdown("<br><br><br>", unsafe_allow_html=True)
 
     # predicted_action_str = get_pred_for_turn(dataset, demo_name, turn)
     # st.write(f"Predicted Action: {predicted_action_str}")
