@@ -27,6 +27,7 @@ from playwright.sync_api import sync_playwright, Playwright, Browser
 from datasets import load_dataset
 import base64
 import pandas as pd
+import re
 
 playwright: Playwright = None
 browser: Browser = None
@@ -101,6 +102,20 @@ def setup_datasets():
     data_mapping = create_mapping(cleaned_data, csv_df)
     # st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
+    actions_history = extract_non_say_actions(unique_data_dict['validation'], 'apfyesq', 6)
+    st.write(actions_history)
+
+
+def extract_non_say_actions(df, demo_name, turn_number):
+    # df is the unique_data_dict
+    # Retrieve the row based on demo_name and turn_number
+    row = df[(df['demo'] == demo_name) & (df['turn'] == turn_number)]
+    if not row.empty:
+        action_history = row['action_history'].values[0]
+        # Regex to find non-"say" actions
+        actions = re.findall(r'(?<!say)\(.*?\)', action_history)
+        return actions
+    return []
 
 def setup_browser():
     global playwright, browser, page
