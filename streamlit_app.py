@@ -90,7 +90,7 @@ def setup_datasets():
     cleaned_data = clean_json_file(file_path)
     csv_df = load_csv_data("./valid.csv")
     data_mapping = create_mapping(cleaned_data, csv_df)
-    st.write(data_mapping[0])
+    st.write(data_mapping)
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
