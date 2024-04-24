@@ -348,6 +348,7 @@ def execute_browser_actions(browser_actions):
                 # First try clicking by ID
                 if element_id:
                     page.click(f"#{element_id}:visible")
+                    page.fill(f"#{element_id}:visible", args['pasted'])
                     # print(f"Clicked using ID: #{element_id}")
                     st.write(f"Clicked using ID: #{element_id}")
                 else:
