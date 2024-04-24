@@ -179,23 +179,23 @@ def parse_action_details(action):
         }
     return {}
 
-# def setup_datasets():
-#     global unique_data_dict, cleaned_data, data_mapping
-#     file_path = './valid_predictions.json'
-#     cleaned_data = clean_json_file(file_path)
-#     csv_df = load_csv_data("./valid.csv")
-#     data_mapping = create_mapping(cleaned_data, csv_df)
-#     unique_data_dict = load_and_prepare_data()
-
-def setup_datasets(model_name):
+def setup_datasets():
     global unique_data_dict, cleaned_data, data_mapping
-    if model_name == "2.7B":
-        file_path = "./experiment_data/llama2_7_valid_correct.json"
-    else: file_path = "./experiment_data/llama1_3_valid_correct.json"
+    file_path = './valid_predictions.json'
     cleaned_data = clean_json_file(file_path)
     csv_df = load_csv_data("./valid.csv")
     data_mapping = create_mapping(cleaned_data, csv_df)
     unique_data_dict = load_and_prepare_data()
+
+# def setup_datasets(model_name):
+#     global unique_data_dict, cleaned_data, data_mapping
+#     if model_name == "2.7B":
+#         file_path = "./experiment_data/llama2_7_valid_correct.json"
+#     else: file_path = "./experiment_data/llama1_3_valid_correct.json"
+#     cleaned_data = clean_json_file(file_path)
+#     csv_df = load_csv_data("./valid.csv")
+#     data_mapping = create_mapping(cleaned_data, csv_df)
+#     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
     global playwright, browser, page
