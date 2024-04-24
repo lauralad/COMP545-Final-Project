@@ -348,23 +348,28 @@ def execute_browser_actions(browser_actions):
                 # First try clicking by ID
                 if element_id:
                     page.click(f"#{element_id}")
-                    print(f"Clicked using ID: #{element_id}")
+                    # print(f"Clicked using ID: #{element_id}")
+                    st.write(f"Clicked using ID: #{element_id}")
                 else:
                     raise TimeoutError("No ID provided, trying class selectors.")
 
             except TimeoutError as e:
-                print(f"Failed to click using ID: {str(e)}")
+                # print(f"Failed to click using ID: {str(e)}")
+                st.write(f"Failed to click using ID: {str(e)}")
                 # If ID click fails, try clicking by class
                 for class_name in element_classes:
                     try:
                         page.click(f".{class_name}")
-                        print(f"Clicked using class: .{class_name}")
+                        # print(f"Clicked using class: .{class_name}")
+                        st.write(f"Clicked using class: .{class_name}")
                         break
                     except TimeoutError:
-                        print(f"Failed to click using class: .{class_name}")
+                        # print(f"Failed to click using class: .{class_name}")
+                        st.write(f"Failed to click using class: .{class_name}")
                         continue
                 else:
-                    print("All class selectors failed.")
+                    # print("All class selectors failed.")
+                    st.write("All class selectors failed.")
 
             # Optional: Wait to observe the effects
             # page.wait_for_timeout(1000)
