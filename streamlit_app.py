@@ -28,6 +28,7 @@ import re
 import torch
 from transformers import pipeline
 from huggingface_hub import snapshot_download
+from bs4 import BeautifulSoup
 
 # Global variables
 action_model = None
@@ -137,6 +138,19 @@ def create_mapping(json_data, csv_df):
         data_mapping[key] = index
 
     return data_mapping
+
+def extract_attributes(html):
+    # Parse the HTML
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # Find the input element (assuming there's only one input in the HTML snippet)
+    input_element = soup.find('input')
+    
+    # Extract id and class attributes
+    element_id = input_element.get('id', None)
+    element_classes = input_element.get('class', [])  # This returns a list of classes
+    
+    return element_id, element_classes
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -325,13 +339,17 @@ def execute_browser_actions(browser_actions):
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
             st.write(args['element'])
-            class_name = args['element']['xpath']
-            xpath_expression = f"xpath=//{class_name}"
-
+            elem_html = args['element']['outerHTML']
+            element_id, element_classes = extract_attributes(elem_html)
+            st.write(f"Element ID: {element_id}")
+            st.write(f"Element Classes: {element_classes}")
+            # xpath_expression = f"xpath=//{class_name}"
+            if element_id:
+                page.click(f"#{element_id}")  # CSS ID selector
             # Using the locator with the XPath to click the element
-            page.locator(xpath_expression).click()
+            # page.locator(xpath_expression).click()
             # page.click(f".{class_name}")
-            page.fill()
+            # page.fill()
 
     
 
