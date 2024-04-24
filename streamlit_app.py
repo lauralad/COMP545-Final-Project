@@ -237,7 +237,7 @@ def execute_action(action):
         st.write(f"Clicked at ({x}, {y})")
         
         # print(f"Clicked at ({x}, {y})")
-        page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
+        # page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
     page.screenshot(path=screenshot_path)
     # if action['intent'] == 'load':
     #     page.goto(action['arguments']['metadata']['url'])
