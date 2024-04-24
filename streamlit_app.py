@@ -179,14 +179,23 @@ def parse_action_details(action):
         }
     return {}
 
-def setup_datasets():
+# def setup_datasets():
+#     global unique_data_dict, cleaned_data, data_mapping
+#     file_path = './valid_predictions.json'
+#     cleaned_data = clean_json_file(file_path)
+#     csv_df = load_csv_data("./valid.csv")
+#     data_mapping = create_mapping(cleaned_data, csv_df)
+#     unique_data_dict = load_and_prepare_data()
+
+def setup_datasets(model_name):
     global unique_data_dict, cleaned_data, data_mapping
-    file_path = './valid_predictions.json'
+    if model_name == "2.7B":
+        file_path = "./experiment_data/llama2_7_valid_correct.json"
+    else: file_path = "./experiment_data/llama1_3_valid_correct.json"
     cleaned_data = clean_json_file(file_path)
     csv_df = load_csv_data("./valid.csv")
     data_mapping = create_mapping(cleaned_data, csv_df)
     unique_data_dict = load_and_prepare_data()
-
 
 def setup_browser():
     global playwright, browser, page
@@ -326,7 +335,7 @@ def execute_browser_actions(browser_actions):
 
     
 
-def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
+def show_overview(data, model_name, recording_name, dataset, demo_name, turn, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
     st.header(f"Recording: `{dataset} > Demo {demo_name} > Turn {turn}`")
     screenshot_path = "screenshot.png"
@@ -517,8 +526,8 @@ def run():
     setup_browser()
     try:
         model_choice = st.sidebar.selectbox(
-            "Choose a model:",
-            ["llama1.3B", "llama2.7B"],
+            "Choose your Llama model:",
+            ["1.3B", "2.7B"],
             index=0  # Default selection
         )
         # st.sidebar.write(f"You have selected the model: {model_choice}")
@@ -552,7 +561,7 @@ def run():
 
                     # data = unique_data_dict[dataset][demo_name][selected_turn]
 
-                    show_overview(data, recording_name=recording_name,dataset=dataset, demo_name=demo_name, turn=selected_turn, basedir=basedir)
+                    show_overview(data, model_name=model_choice, recording_name=recording_name,dataset=dataset, demo_name=demo_name, turn=selected_turn, basedir=basedir)
     finally:
         shutdown_browser()
     
