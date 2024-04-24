@@ -20,7 +20,7 @@ from utils import (
     
 )
 
-from playwright.sync_api import sync_playwright, Playwright, Browser
+from playwright.sync_api import sync_playwright, Playwright, Browser, TimeoutError
 from datasets import load_dataset
 import base64
 import pandas as pd
@@ -29,6 +29,7 @@ import torch
 from transformers import pipeline
 from huggingface_hub import snapshot_download
 from weblinx.processing import load_candidate_elements
+from bs4 import BeautifulSoup
 
 # Global variables
 action_model = None
@@ -175,6 +176,19 @@ def create_mapping(json_data, csv_df):
         
         
     return pred_map, data_mapping
+
+def extract_attributes(html):
+    # Parse the HTML
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # Find the input element (assuming there's only one input in the HTML snippet)
+    input_element = soup.find('input')
+    
+    # Extract id and class attributes
+    element_id = input_element.get('id', None)
+    element_classes = input_element.get('class', [])  # This returns a list of classes
+    
+    return element_id, element_classes
 
 def extract_non_say_actions(df, demo_name, turn_number):
     # df is the unique_data_dict
@@ -368,14 +382,48 @@ def execute_browser_actions(browser_actions):
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
-            st.write(args['element']['attributes'])
-            class_name = args['element']['attributes']['xpath']
-            xpath_expression = f"xpath=//{class_name}"
+            st.write(args)
+            elem_html = args['element']['outerHTML']
+            element_id, element_classes = extract_attributes(elem_html)
+            st.write(f"Element ID: {element_id}")
+            st.write(f"Element Classes: {element_classes}")
+            # xpath_expression = f"xpath=//{class_name}"
+            try:
+                # First try clicking by ID
+                if element_id:
+                    page.click(f"#{element_id}:visible")
+                    page.fill(f"#{element_id}:visible", args['pasted'])
+                    # print(f"Clicked using ID: #{element_id}")
+                    st.write(f"Clicked using ID: #{element_id}")
+                else:
+                    raise TimeoutError("No ID provided, trying class selectors.")
 
+            except TimeoutError as e:
+                # print(f"Failed to click using ID: {str(e)}")
+                st.write(f"Failed to click using ID: {str(e)}")
+                # If ID click fails, try clicking by class
+                for class_name in element_classes:
+                    try:
+                        page.click(f".{class_name}:visible")
+                        # print(f"Clicked using class: .{class_name}")
+                        st.write(f"Clicked using class: .{class_name}")
+                        break
+                    except TimeoutError:
+                        # print(f"Failed to click using class: .{class_name}")
+                        st.write(f"Failed to click using class: .{class_name}")
+                        continue
+                else:
+                    # print("All class selectors failed.")
+                    st.write("All class selectors failed.")
+
+            # Optional: Wait to observe the effects
+            # page.wait_for_timeout(1000)
+            # if element_id:
+            #     page.click(f"#{element_id}")  # CSS ID selector
             # Using the locator with the XPath to click the element
-            page.locator(xpath_expression).click()
+            # page.locator(xpath_expression).click()
             # page.click(f".{class_name}")
-            page.fill()
+            # page.fill()
 
     
 
