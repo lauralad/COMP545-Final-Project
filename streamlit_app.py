@@ -175,20 +175,21 @@ def execute_action(action):
     elif intent == 'click':
         x = args['metadata']['mouseX']
         y = args['metadata']['mouseY']
+        page.evaluate('''({x, y}) => {
+                    const rect = document.createElement('div');
+                    rect.style.position = 'absolute';
+                    rect.style.border = '3px solid red';
+                    rect.style.width = '10px';
+                    rect.style.height = '10px';
+                    rect.style.left = `${x - 5}px`;
+                    rect.style.top = `${y - 5}px`;
+                    rect.style.pointerEvents = 'none';
+                    rect.style.zIndex = '9999';
+                    document.body.appendChild(rect);
+        }''', {'x': x, 'y': y})
         page.mouse.click(x, y)
         st.write(f"Clicked at ({x}, {y})")
-        # page.evaluate('''({x, y}) => {
-        #             const rect = document.createElement('div');
-        #             rect.style.position = 'absolute';
-        #             rect.style.border = '3px solid red';
-        #             rect.style.width = '10px';
-        #             rect.style.height = '10px';
-        #             rect.style.left = `${x - 5}px`;
-        #             rect.style.top = `${y - 5}px`;
-        #             rect.style.pointerEvents = 'none';
-        #             rect.style.zIndex = '9999';
-        #             document.body.appendChild(rect);
-        # }''', {'x': x, 'y': y})
+        
         # print(f"Clicked at ({x}, {y})")
         page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
     page.screenshot(path=screenshot_path)
@@ -252,10 +253,10 @@ def execute_browser_actions(browser_actions):
             st.write(f"Clicked at ({x}, {y})")
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
-        # elif intent == "paste":
-        #     class_name = args['element']['attributes']['class']
-        #     page.click(f".{class_name}")
-        #     page.fill
+        elif intent == "paste":
+            class_name = args['element']['attributes']['class']
+            page.click(f".{class_name}")
+            page.fill
 
     
     
