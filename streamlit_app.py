@@ -219,10 +219,10 @@ def execute_action(action):
                 const rect = document.createElement('div');
                 rect.style.position = 'absolute';
                 rect.style.border = '3px solid red';
-                rect.style.width = '30px';  // Increased size
-                rect.style.height = '30px';  // Increased size
-                rect.style.left = `${x - 15}px`;  // Adjusting position to center the square
-                rect.style.top = `${y - 15}px`;  // Adjusting position to center the square
+                rect.style.width = '10px';
+                rect.style.height = '10px';
+                rect.style.left = `${x - 5}px`;
+                rect.style.top = `${y - 5}px`;
                 rect.style.pointerEvents = 'none';
                 rect.style.zIndex = '9999';
                 document.body.appendChild(rect);
