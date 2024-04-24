@@ -220,6 +220,27 @@ def execute_browser_action(details):
     
     return screenshot_path
 
+def execute_action(action):
+    
+    screenshot_path = "screenshot.png"
+    
+
+
+    if action['intent'] == 'load':
+        page.goto(action['arguments']['metadata']['url'])
+    elif action['intent'] == 'click':
+        page.click(action['arguments']['element']['xpath'])  # assuming xpath is always available
+    elif action['intent'] == 'textInput':
+        page.fill(action['arguments']['element']['xpath'], action['text'])
+    elif action['intent'] == 'paste':
+        # Simulate paste action (Playwright doesn't have a direct paste method)
+        page.type(action['arguments']['element']['xpath'], action['pasted'])
+    elif action['intent'] == 'submit':
+        page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
+    page.screenshot(path=screenshot_path)
+    
+    return screenshot_path
+
 def show_selectbox(demonstration_dir):
     # find all the subdirectories in the current directory
     dirs = [
@@ -253,7 +274,10 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     actions_history = extract_non_say_actions(unique_data_dict['validation'], demo_name=demo_name, turn_number=turn)
     st.write(actions_history)
     details_list = [parse_action_details(action) for action in actions_history]
-    st.write(details_list)
+    for details in details_list:
+        screens = execute_browser_action(details)
+
+    # st.write(details_list)
 
     selected_turn_idx = turn #6
     screenshot_size = st.session_state.get("screenshot_size_view_mode", "regular")
@@ -317,8 +341,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         
         elif d["type"] == "browser" and (page_filename := d["state"]["page"]):
             page_path = f"{basedir}/pages/{page_filename}"
-            html_content = load_page(page_path)
-            load_html_content(html_content)
+            # html_content = load_page(page_path)
+            # load_html_content(html_content)
 
             # html_page = load_page(page_path)
             # load_html_content(html_page)
@@ -351,7 +375,8 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
 
         # Do the action in the browser
         # execute_browser_action(d['action'])
-        # screenshot_path = execute_browser_action(d['action'])
+        # parse_action_details(d['action'])
+        screenshot_path = execute_action(d['action'])
         if screenshot_path:
             imgg = Image.open(screenshot_path)
             col_act2.image(imgg, caption="Screenshot after action")
