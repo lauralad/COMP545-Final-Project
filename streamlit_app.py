@@ -280,8 +280,10 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
         if i == turn:
-            pred_action = "hi"
-            col_act2.markdown(action_str)
+            pred_idx = data_mapping[turn]
+            pred_action = cleaned_data[pred_idx]
+            col_act2.markdown(pred_action)
+            # col_act2.markdown(action_str)
         else:
             col_act2.markdown(action_str)#predicted_action_str
 
