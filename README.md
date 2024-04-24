@@ -9,3 +9,7 @@ git clone
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
+
+## Experiment
+Open experiment.ipynb, and you can run the code if you like to regenerate the models' predictions
+If you scroll to the bottom however, you can run the accuracy retrieval on the sample data, which is present within the experiment_data dir.
