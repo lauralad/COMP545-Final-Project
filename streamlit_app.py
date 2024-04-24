@@ -347,7 +347,7 @@ def execute_browser_actions(browser_actions):
             try:
                 # First try clicking by ID
                 if element_id:
-                    page.click(f"#{element_id}")
+                    page.click(f"#{element_id}:visible")
                     # print(f"Clicked using ID: #{element_id}")
                     st.write(f"Clicked using ID: #{element_id}")
                 else:
@@ -359,7 +359,7 @@ def execute_browser_actions(browser_actions):
                 # If ID click fails, try clicking by class
                 for class_name in element_classes:
                     try:
-                        page.click(f".{class_name}")
+                        page.click(f".{class_name}:visible")
                         # print(f"Clicked using class: .{class_name}")
                         st.write(f"Clicked using class: .{class_name}")
                         break
