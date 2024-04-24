@@ -224,20 +224,33 @@ def execute_action(action):
     
     screenshot_path = "screenshot.png"
     
+    intent = action['action']['intent']
+    args = action['action']['arguments']
+    if intent == 'load':
+        url = args['properties']['url']
+        page.goto(url)
+        # print(f"Loaded URL: {url}")
+        st.write(f"Loaded URL: {url}")
+    elif intent == 'click':
+        x = args['metadata']['mouseX']
+        y = args['metadata']['mouseY']
+        page.mouse.click(x, y)
+        st.write(f"Clicked at ({x}, {y})")
+        # print(f"Clicked at ({x}, {y})")
+        page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
 
-
-    if action['intent'] == 'load':
-        page.goto(action['arguments']['metadata']['url'])
-    elif action['intent'] == 'click':
-        page.click(action['arguments']['element']['attributes']['class'])  # assuming xpath is always available
-    elif action['intent'] == 'textInput':
-        page.fill(action['arguments']['element']['xpath'], action['text'])
-    elif action['intent'] == 'paste':
-        # Simulate paste action (Playwright doesn't have a direct paste method)
-        page.type(action['arguments']['element']['xpath'], action['pasted'])
-    elif action['intent'] == 'submit':
-        page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
-    page.screenshot(path=screenshot_path)
+    # if action['intent'] == 'load':
+    #     page.goto(action['arguments']['metadata']['url'])
+    # elif action['intent'] == 'click':
+    #     page.click(action['arguments']['element']['attributes']['class'])  # assuming xpath is always available
+    # elif action['intent'] == 'textInput':
+    #     page.fill(action['arguments']['element']['xpath'], action['text'])
+    # elif action['intent'] == 'paste':
+    #     # Simulate paste action (Playwright doesn't have a direct paste method)
+    #     page.type(action['arguments']['element']['xpath'], action['pasted'])
+    # elif action['intent'] == 'submit':
+    #     page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
+    # page.screenshot(path=screenshot_path)
     
     return screenshot_path
 
@@ -261,6 +274,35 @@ def show_selectbox(demonstration_dir):
 
     return recording_name
 
+def filter_browser_actions(data, turn_index):
+    browser_actions = []
+    for i, entry in enumerate(data):
+        if i == turn_index:
+            break
+        if entry['type'] == 'browser':
+            browser_actions.append(entry)
+    return browser_actions
+
+def execute_browser_actions(browser_actions):
+    for action in browser_actions:
+        intent = action['action']['intent']
+        args = action['action']['arguments']
+        if intent == 'load':
+            url = args['properties']['url']
+            page.goto(url)
+            # print(f"Loaded URL: {url}")
+            st.write(f"Loaded URL: {url}")
+        elif intent == 'click':
+            x = args['metadata']['mouseX']
+            y = args['metadata']['mouseY']
+            page.mouse.click(x, y)
+            st.write(f"Clicked at ({x}, {y})")
+            # print(f"Clicked at ({x}, {y})")
+            page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
+
+    
+    
+
 
 def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     st.title('[WebLINX](https://mcgill-nlp.github.io/weblinx) Explorer')
@@ -268,14 +310,10 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
     screenshot_path = "screenshot.png"
     # Find indices for instructor chat turns
     instructor_turns = [i for i, d in enumerate(data) if d['type'] == 'chat' and d['speaker'] == 'instructor']
-    # st.write(f"instructor_turns {instructor_turns}")
-    # st.write(f"turn 5 {data[5]}")
+    
+    browser_actions = filter_browser_actions(data, turn)
+    execute_browser_actions(browser_actions)
 
-    actions_history = extract_non_say_actions(unique_data_dict['validation'], demo_name=demo_name, turn_number=turn)
-    # st.write(actions_history)
-    details_list = [parse_action_details(action) for action in actions_history]
-    for details in details_list:
-        screens = execute_browser_action(details)
 
     # st.write(details_list)
 
@@ -377,7 +415,7 @@ def show_overview(data, recording_name, dataset, demo_name, turn, basedir):
         # execute_browser_action(d['action'])
         # parse_action_details(d['action'])
         # st.write(f"action {d['action']}")
-        screenshot_path = execute_action(d['action'])
+        screenshot_path = execute_action(d)
         if screenshot_path:
             imgg = Image.open(screenshot_path)
             col_act2.image(imgg, caption="Screenshot after action")
