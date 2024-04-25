@@ -139,22 +139,94 @@ def clean_json_file(file_path):
     # Read the JSON data from file
     with open(file_path, 'r') as file:
         pred_data = json.load(file)
-    # Clean up each string in the list
     cleaned_data = []
-    for item in pred_data:
+    for i, item in enumerate(pred_data):
         #grab first action only
-        closing_paren_index = item.find(')')
-        substring = item[:closing_paren_index + 1]
-        # Strip leading/trailing whitespace and reduce any internal excess whitespace
+        open_paren = 0 
+        close_paren = 0 
+        last_balanced_index = 0
+        initial_split = ' '.join(item.split())
+        for index, char in enumerate(initial_split):
+            if char == '(':
+                open_paren += 1
+            elif char == ')':
+                close_paren += 1
+            if open_paren == close_paren:
+                last_balanced_index = index + 1 
+        if open_paren == close_paren:
+            substring = initial_split[:last_balanced_index]
+        else:
+            substring = initial_split
         cleaned_item = ' '.join(substring.split())
-        action_type = re.match(r"^(.*?)\(", cleaned_item).group(1)
-        cleaned_data.append([cleaned_item, action_type])
+        cleaned_data.append(cleaned_item)
     return cleaned_data
 
 def load_csv_data(file_path):
     # Read the CSV using Pandas and extract demo names and turn numbers
     pred_df = pd.read_csv(file_path)
     return pred_df[['demo', 'turn']]
+
+def interpret_action(action):
+    action_type = action.split("(")[0].strip()
+    output = None
+    if action_type == "click":
+        output = extract_uid(action)
+    elif action_type == "text_input":
+        action_uid = extract_uid(action)
+        input_pattern = r'text="([^"]*)'
+        input_match = re.search(input_pattern, action)
+        text_input = None
+        if input_match:
+            text_input = input_match.group(1)
+        else: 
+            print("input_match:", input_match, "action:", action)
+            print(text_input)
+            raise KeyError
+        output = [action_uid, text_input]
+        
+    elif action_type == "say":
+        utterance_pattern = r'utterance="([^"]*)'
+        match = re.search(utterance_pattern, action)
+        if match:
+            output = match.group(1)
+        else:
+            print("match:", match)
+            print(print(action))
+            raise KeyError
+        
+    elif action_type == "submit":
+        output = extract_uid(action)
+        
+    elif action_type == "load":
+        url_pattern = r'url="([^"]*)'
+        url_match = re.search(url_pattern, action)
+        if url_match:
+            output = url_match.group(1)
+        else:
+            print(action)
+            raise KeyError
+        
+        
+    elif action_type == "scroll":
+        scroll_pattern = re.compile(r'scroll\(x=(\d+), y=(\d+)\)')
+        match = scroll_pattern.match(action)
+        
+        if match:
+            x_value = int(match.group(1))
+            y_value = int(match.group(2))
+            output = [x_value, y_value]
+    elif action_type == "change":
+        action_uid = extract_uid(action)
+        change_pattern = r'value="([^"]*)'
+        change_match = re.search(change_pattern, action)
+        if change_match:
+            output = change_match.group(1)
+        else:
+            print(action)
+            raise KeyError
+    else:
+        pass  
+    return action_type, output   
 
 def create_mapping(json_data, csv_df):
     global data_mapping
@@ -166,7 +238,7 @@ def create_mapping(json_data, csv_df):
         key = f"{demo_name}_{turn_number}"  # Create a string key
         data_mapping[key] = index
         pred_action = json_data[i][0]
-        pred_action_type = json_data[i][1]
+        pred_action_type = interpret_action(json_data[i][1])
         pred_uid = extract_uid(pred_action)
         pred_cand = None
         if pred_uid != None:
@@ -240,7 +312,7 @@ def setup_datasets():
     csv_df = load_csv_data("./valid.csv")
     # create_mapping now returns pred_map as well. This object SHOULD be a dictionary that has information for every turn's predicted information in valid. 
     # pred_map is a dictionary, where the key is (demo_name, turn_num), and 
-    # the value is a list: [predicted_action, predicted_action's type, predicted_action's uid (if available), [predicted candidate's class, predicted candidate's xpath] (if available)]
+    # the value is a list: [predicted_action, [predicted_action's type, what the action says to do], predicted_action's uid (if available), [predicted candidate's class, predicted candidate's xpath] (if available)]
     # pred_map should be used to get the info that you need for the specific demo_name and turn_num that you need when selected.
     pred_map, data_mapping = create_mapping(cleaned_data, csv_df)
     unique_data_dict = load_and_prepare_data()
@@ -542,7 +614,6 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         if i == turn:
             key = f"{demo_name}_{turn}"
             pred_idx = data_mapping[key]
-            #might be messed up
             pred_action = cleaned_data[0][pred_idx]
             col_act2.markdown(pred_action)
             # col_act2.markdown(action_str)
