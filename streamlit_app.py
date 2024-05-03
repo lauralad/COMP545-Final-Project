@@ -7,6 +7,7 @@ from PIL import Image
 import subprocess
 import streamlit as st
 import os
+import pickle
 
 from utils import (
     load_json,
@@ -228,26 +229,23 @@ def interpret_action(action):
         pass  
     return action_type, output   
 
-def create_mapping(json_data, csv_df):
+def create_mapping(csv_df):
     global data_mapping
-    global pred_map
     i = 0
     for index, row in csv_df.iterrows():
         demo_name = row['demo']
         turn_number = row['turn']
         key = f"{demo_name}_{turn_number}"  # Create a string key
         data_mapping[key] = index
-        pred_action = json_data[i][0]
-        pred_action_type = interpret_action(json_data[i][1])
-        pred_uid = extract_uid(pred_action)
-        pred_cand = None
-        if pred_uid != None:
-            pred_cand = translate_pred(uid=pred_uid, demo=demo_name, turn=turn_number)
-        pred_map[(demo_name, turn_number)] = [pred_action, pred_action_type, pred_uid, pred_cand]
-        i += 1
         
         
-    return pred_map, data_mapping
+    return data_mapping
+
+def get_preds():
+    global pred_mapping
+    with open('preds.pkl', 'rb') as f:
+        pred_mapping = pickle.load(f)
+    return pred_mapping
 
 def extract_attributes(html):
     # Parse the HTML
@@ -310,11 +308,18 @@ def setup_datasets():
     #format is [pred_action, pred_action's type]
     cleaned_data = clean_json_file(file_path)
     csv_df = load_csv_data("./valid.csv")
-    # create_mapping now returns pred_map as well. This object SHOULD be a dictionary that has information for every turn's predicted information in valid. 
+    data_mapping = create_mapping(csv_df)
     # pred_map is a dictionary, where the key is (demo_name, turn_num), and 
     # the value is a list: [predicted_action, [predicted_action's type, what the action says to do], predicted_action's uid (if available), [predicted candidate's class, predicted candidate's xpath] (if available)]
     # pred_map should be used to get the info that you need for the specific demo_name and turn_num that you need when selected.
-    pred_map, data_mapping = create_mapping(cleaned_data, csv_df)
+    # Example below:
+    # full action: [0], the action type is text_input [1][0], the uid of the object it's doing it to is 67e2a5fb-8b1d-41a0 ([1][1][0]) the text is biotechnlogy ([1][1][1]), the uid of the action is [2]
+    # the class of the object is [3][0], the xpath is [3][1]. for different actions these will be slightly different, specifically how [1] looks. 
+    # ['text_input(text="biotechnology", uid="67e2a5fb-8b1d-41a0")', ['text_input', ['67e2a5fb-8b1d-41a0', 'biotechnology']], '67e2a5fb-8b1d-41a0', ['searchbox form-search form-input', '/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form/div[1]/input']]
+    
+    # if the predicted candidate's class is "get", it means that it's a submit action and it should do something along the lines of click enter. Example of what one of these looks like right below
+    # ['submit(uid="c7fbc11c-0949-4ab2")', -['submit', 'c7fbc11c-0949-4ab2'], 'c7fbc11c-0949-4ab2', ['get', '/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form']]
+    pred_mapping = get_preds()
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
