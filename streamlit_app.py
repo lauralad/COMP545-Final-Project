@@ -45,7 +45,8 @@ datasets = {}
 unique_data_dict = {}
 cleaned_data = [] #json of preds
 data_mapping = {}
-valid_candidates_list = load_candidate_elements("./wl_data/candidates/valid.jsonl")
+# valid_candidates_list = load_candidate_elements("./wl_data/candidates/valid.jsonl")
+pred_mapping = {}
 
 def init_model():
     global action_model, template
@@ -88,18 +89,18 @@ def extract_uid(action):
     else:
         return None
     
-def translate_pred(uid, demo, turn):
-    turn_cands = valid_candidates_list[(demo, int(turn))]
-    pred_uid = uid
-    pred_xpath = None
-    pred_class = None
-    for i in turn_cands:
-        if i['uid'] == pred_uid:
-            pred_xpath = i["elem_dict"]["xpath"]
-            pattern = r"class='([^']+)'"
-            elem_attributes = i["elem_dict"]["attributes"]
-            pred_class = re.search(pattern, elem_attributes).group(1)
-    return pred_class, pred_xpath
+# def translate_pred(uid, demo, turn):
+#     turn_cands = valid_candidates_list[(demo, int(turn))]
+#     pred_uid = uid
+#     pred_xpath = None
+#     pred_class = None
+#     for i in turn_cands:
+#         if i['uid'] == pred_uid:
+#             pred_xpath = i["elem_dict"]["xpath"]
+#             pattern = r"class='([^']+)'"
+#             elem_attributes = i["elem_dict"]["attributes"]
+#             pred_class = re.search(pattern, elem_attributes).group(1)
+#     return pred_class, pred_xpath
 
 
 
