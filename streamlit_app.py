@@ -365,46 +365,47 @@ def execute_action(action_type, action_class):
         # print(f"Loaded URL: {url}")
         st.write(f"Loaded URL: {url}")
     elif intent == 'click':
-        element_coordinates = page.evaluate('''
-            (className) => {
-                const element = document.querySelector(`${className}:visible`);
-                if (element) {
-                    const rect = element.getBoundingClientRect();
-                    return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
-                }
-                return null;
-            }
-        ''', f".{action_class}")
-        if element_coordinates:
-            # Draw the red circle at the fetched coordinates
-            page.evaluate('''
-                ({x, y}) => {
-                    const rect = document.createElement('div');
-                    rect.style.position = 'absolute';
-                    rect.style.border = '3px solid red';
-                    rect.style.width = '20px';  # Increased size for better visibility
-                    rect.style.height = '20px';
-                    rect.style.left = `${x - 10}px`;  # Adjusted for larger size
-                    rect.style.top = `${y - 10}px`;
-                    rect.style.borderRadius = '50%';  # Makes the div circular
-                    rect.style.pointerEvents = 'none';
-                    rect.style.zIndex = '9999';
-                    document.body.appendChild(rect);
+        page.click(f".{action_class}:visible")
+        # element_coordinates = page.evaluate('''
+        #     (className) => {
+        #         const element = document.querySelector(`${className}:visible`);
+        #         if (element) {
+        #             const rect = element.getBoundingClientRect();
+        #             return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
+        #         }
+        #         return null;
+        #     }
+        # ''', f".{action_class}")
+        # if element_coordinates:
+        #     # Draw the red circle at the fetched coordinates
+        #     page.evaluate('''
+        #         ({x, y}) => {
+        #             const rect = document.createElement('div');
+        #             rect.style.position = 'absolute';
+        #             rect.style.border = '3px solid red';
+        #             rect.style.width = '20px';  # Increased size for better visibility
+        #             rect.style.height = '20px';
+        #             rect.style.left = `${x - 10}px`;  # Adjusted for larger size
+        #             rect.style.top = `${y - 10}px`;
+        #             rect.style.borderRadius = '50%';  # Makes the div circular
+        #             rect.style.pointerEvents = 'none';
+        #             rect.style.zIndex = '9999';
+        #             document.body.appendChild(rect);
 
-                    // Optional: Remove the circle after 1000 ms
-                    setTimeout(() => {
-                        document.body.removeChild(rect);
-                    }, 1000);
-                }
-            ''', element_coordinates)
+        #             // Optional: Remove the circle after 1000 ms
+        #             setTimeout(() => {
+        #                 document.body.removeChild(rect);
+        #             }, 1000);
+        #         }
+        #     ''', element_coordinates)
 
-            # Click the element at the calculated center point
-            page.mouse.click(element_coordinates['x'], element_coordinates['y'])
+        #     # Click the element at the calculated center point
+        #     page.mouse.click(element_coordinates['x'], element_coordinates['y'])
 
-            st.write(f"Clicked at visible element with class {action_class} at coordinates ({element_coordinates['x']}, {element_coordinates['y']})")
+        #     st.write(f"Clicked at visible element with class {action_class} at coordinates ({element_coordinates['x']}, {element_coordinates['y']})")
 
-        else:
-            st.error("Visible element not found.")
+        # else:
+        #     st.error("Visible element not found.")
         page.screenshot(path=screenshot_path)
     # if action['intent'] == 'load':
     #     page.goto(action['arguments']['metadata']['url'])
