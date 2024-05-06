@@ -367,7 +367,7 @@ def execute_action(action_type, action_class):
     elif intent == 'click':
         st.write(action_type)
         st.write(action_class)
-        page.click(f".{action_class}:visible")
+        page.click(f"#{action_class}:visible")
         # element_coordinates = page.evaluate('''
         #     (className) => {
         #         const element = document.querySelector(`${className}:visible`);
