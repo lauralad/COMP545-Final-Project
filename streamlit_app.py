@@ -246,6 +246,7 @@ def get_preds():
     global pred_mapping
     with open('preds.pkl', 'rb') as f:
         bad_mapping = pickle.load(f)
+    #Warning: this data structure was not fully serializable as JSON due to one or more unexpected keys. (Error was: keys must be str, int, float, bool or None, not tuple)
     pred_mapping = {str(key): value for key, value in bad_mapping.items()}
     return pred_mapping
 
@@ -543,9 +544,6 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
     col_time.markdown("<br><br><br>", unsafe_allow_html=True)  # Add this to align the first item with the titles
     col_i.markdown("<br><br><br>", unsafe_allow_html=True)
 
-    # predicted_action_str = get_pred_for_turn(dataset, demo_name, turn)
-    # st.write(f"Predicted Action: {predicted_action_str}")
-
     for i in range(previous_instructor_turn_idx, turn + 1):
         d = data[i]
         
@@ -611,7 +609,9 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         col_act1.markdown(action_str)
         if i == turn:
             key = f"{demo_name}_{turn}"
-            # predicted_action = pred_mapping[]
+            # key = str((demo_name, turn))
+            predicted_action = pred_mapping[str((demo_name, turn))]
+            st.write(f"New Predicted Action: {predicted_action}")
             pred_idx = data_mapping[key]
             pred_action = cleaned_data[0][pred_idx]
             st.write(f"Predicted Action: {pred_action}")
