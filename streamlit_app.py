@@ -245,7 +245,8 @@ def create_mapping(csv_df):
 def get_preds():
     global pred_mapping
     with open('preds.pkl', 'rb') as f:
-        pred_mapping = pickle.load(f)
+        bad_mapping = pickle.load(f)
+    pred_mapping = {str(key): value for key, value in bad_mapping.items()}
     return pred_mapping
 
 def extract_attributes(html):
