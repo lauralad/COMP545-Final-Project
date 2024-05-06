@@ -367,7 +367,14 @@ def execute_action(action_type, action_class):
     elif intent == 'click':
         st.write(action_type)
         st.write(action_class)
-        page.click(f"#{action_class}:visible")
+        element_count = page.eval_on_selector_all(f".{action_class}", "elements => elements.length")
+        st.write(f"Found {element_count} elements with class '{action_class}'.")
+
+        try:
+            page.click(f".{action_class}", timeout=5000)  # Timeout after 5000 ms
+        except TimeoutError:
+            st.error(f"Failed to click on element with ID '{action_class}' within 5 seconds.")
+        # page.click(f"#{action_class}:visible")
         # element_coordinates = page.evaluate('''
         #     (className) => {
         #         const element = document.querySelector(`${className}:visible`);
