@@ -365,6 +365,8 @@ def execute_action(action_type, action_class):
         # print(f"Loaded URL: {url}")
         st.write(f"Loaded URL: {url}")
     elif intent == 'click':
+        st.write(action_type)
+        st.wrrite(action_class)
         page.click(f".{action_class}:visible")
         # element_coordinates = page.evaluate('''
         #     (className) => {
