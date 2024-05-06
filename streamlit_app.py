@@ -323,7 +323,7 @@ def setup_datasets():
     # if the predicted candidate's class is "get", it means that it's a submit action and it should do something along the lines of click enter. Example of what one of these looks like right below
     # ['submit(uid="c7fbc11c-0949-4ab2")', -['submit', 'c7fbc11c-0949-4ab2'], 'c7fbc11c-0949-4ab2', ['get', '/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form']]
     pred_mapping = get_preds()
-    # st.write(pred_mapping)
+    st.write(pred_mapping)
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
@@ -353,45 +353,59 @@ def install_playwright():
     # Install browsers used by Playwright
     os.system('playwright install')
 
-def execute_action(action):
+def execute_action(action_type, action_class):
     
     screenshot_path = "screenshot.png"
-    
-    intent = action['action']['intent']
-    args = action['action']['arguments']
+    intent = action_type
+    # intent = action['action']['intent']
+    # args = action['action']['arguments']
     if intent == 'load':
-        url = args['properties']['url']
+        url = action_class
         page.goto(url)
         # print(f"Loaded URL: {url}")
         st.write(f"Loaded URL: {url}")
     elif intent == 'click':
-        x = args['metadata']['mouseX']
-        y = args['metadata']['mouseY']
-        page.evaluate('''
-            ({x, y}) => {
-                const rect = document.createElement('div');
-                rect.style.position = 'absolute';
-                rect.style.border = '3px solid red';
-                rect.style.width = '10px';
-                rect.style.height = '10px';
-                rect.style.left = `${x - 5}px`;
-                rect.style.top = `${y - 5}px`;
-                rect.style.pointerEvents = 'none';
-                rect.style.zIndex = '9999';
-                document.body.appendChild(rect);
-
-                // Remove the square after 1000 ms
-                setTimeout(() => {
-                    document.body.removeChild(rect);
-                }, 1000);
+        element_coordinates = page.evaluate('''
+            (className) => {
+                const element = document.querySelector(`${className}:visible`);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
+                }
+                return null;
             }
-        ''', {'x': x, 'y': y})
-        page.mouse.click(x, y)
-        st.write(f"Clicked at ({x}, {y})")
-        
-        # print(f"Clicked at ({x}, {y})")
-        # page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
-    page.screenshot(path=screenshot_path)
+        ''', f".{action_class}")
+        if element_coordinates:
+            # Draw the red circle at the fetched coordinates
+            page.evaluate('''
+                ({x, y}) => {
+                    const rect = document.createElement('div');
+                    rect.style.position = 'absolute';
+                    rect.style.border = '3px solid red';
+                    rect.style.width = '20px';  # Increased size for better visibility
+                    rect.style.height = '20px';
+                    rect.style.left = `${x - 10}px`;  # Adjusted for larger size
+                    rect.style.top = `${y - 10}px`;
+                    rect.style.borderRadius = '50%';  # Makes the div circular
+                    rect.style.pointerEvents = 'none';
+                    rect.style.zIndex = '9999';
+                    document.body.appendChild(rect);
+
+                    // Optional: Remove the circle after 1000 ms
+                    setTimeout(() => {
+                        document.body.removeChild(rect);
+                    }, 1000);
+                }
+            ''', element_coordinates)
+
+            # Click the element at the calculated center point
+            page.mouse.click(element_coordinates['x'], element_coordinates['y'])
+
+            st.write(f"Clicked at visible element with class {action_class} at coordinates ({element_coordinates['x']}, {element_coordinates['y']})")
+
+        else:
+            st.error("Visible element not found.")
+        page.screenshot(path=screenshot_path)
     # if action['intent'] == 'load':
     #     page.goto(action['arguments']['metadata']['url'])
     # elif action['intent'] == 'click':
@@ -598,7 +612,12 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         event_type = d["action"]["intent"]
 
         action_str = f"**{event_type}**({arguments})"
-        screenshot_path = execute_action(d)
+        predicted_action = pred_mapping[str((demo_name, turn))]
+        action_type = predicted_action[1][0]
+        action_class = predicted_action[3][0]
+        action_uid = predicted_action[2]
+
+        screenshot_path = execute_action(action_type, action_class)
         if screenshot_path:
             imgg = Image.open(screenshot_path)
             col_act2.image(imgg, caption="Screenshot after action")
@@ -608,15 +627,16 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         # col_act.markdown(action_str)
         col_act1.markdown(action_str)
         if i == turn:
-            key = f"{demo_name}_{turn}"
+            
             # key = str((demo_name, turn))
             predicted_action = pred_mapping[str((demo_name, turn))]
             action_type = predicted_action[1][0]
             action_class = predicted_action[3][0]
+            action_uid = predicted_action[2]
             st.write(f"New Predicted Action: {action_type} {action_class}")
-            pred_idx = data_mapping[key]
-            pred_action = cleaned_data[0][pred_idx]
-            st.write(f"Predicted Action: {pred_action}")
+            
+            pred_action = f"**{action_type}**(uid={action_uid})"
+            # st.write(f"Predicted Action: {pred_action}")
             col_act2.markdown(pred_action)
             # col_act2.markdown(action_str)
         else:
