@@ -371,7 +371,7 @@ def execute_action(action_type, action_class):
         st.write(f"Found {element_count} elements with class '{action_class}'.")
 
         try:
-            page.click(f".{action_class}", timeout=5000)  # Timeout after 5000 ms
+            page.click(f".{action_class}:visible", timeout=5000)  # Timeout after 5000 ms
         except TimeoutError:
             st.error(f"Failed to click on element with ID '{action_class}' within 5 seconds.")
         # page.click(f"#{action_class}:visible")
