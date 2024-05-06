@@ -303,7 +303,7 @@ def parse_action_details(action):
     return {}
 
 def setup_datasets():
-    global unique_data_dict, cleaned_data, data_mapping
+    global unique_data_dict, cleaned_data, data_mapping, pred_mapping
     file_path = './valid_predictions.json'
     # clean_json_file has been updated to return not just the action, but also the action type of that action, if you need it.
     #format is [pred_action, pred_action's type]
@@ -321,6 +321,7 @@ def setup_datasets():
     # if the predicted candidate's class is "get", it means that it's a submit action and it should do something along the lines of click enter. Example of what one of these looks like right below
     # ['submit(uid="c7fbc11c-0949-4ab2")', -['submit', 'c7fbc11c-0949-4ab2'], 'c7fbc11c-0949-4ab2', ['get', '/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form']]
     pred_mapping = get_preds()
+    st.write(pred_mapping)
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
@@ -609,6 +610,7 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         col_act1.markdown(action_str)
         if i == turn:
             key = f"{demo_name}_{turn}"
+            # predicted_action = pred_mapping[]
             pred_idx = data_mapping[key]
             pred_action = cleaned_data[0][pred_idx]
             st.write(f"Predicted Action: {pred_action}")
