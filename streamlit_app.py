@@ -407,7 +407,7 @@ def execute_action(predicted_action):
 
             # Take a screenshot after the click and marker addition
             page.screenshot(path=screenshot_path)
-            st.success(f"Successfully clicked on the element at XPath '{xpath}' and marked the click location.")
+            # st.success(f"Successfully clicked on the element at XPath '{xpath}' and marked the click location.")
         else:
             st.error("Failed to get bounding box for the element.")
         
@@ -626,8 +626,11 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         
         screenshot_path = execute_action(predicted_action)
         if screenshot_path:
-            imgg = Image.open(screenshot_path)
-            col_act2.image(imgg, caption="Screenshot after action")
+            if i == turn:
+                imgg = Image.open(screenshot_path)
+                col_act2.image(imgg, caption="Screenshot after action")
+            else: 
+                col_act2.image(img)
         if img:
             col_act1.image(img)
         
