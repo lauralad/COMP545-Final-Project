@@ -367,30 +367,14 @@ def execute_action(action_type, action_class):
     elif intent == 'click':
         st.write(action_type)
         st.write(action_class)
-        visible_elements = page.eval_on_selector_all(f".{action_class}", '''elements => {
-            return elements.map(el => {
-                const style = window.getComputedStyle(el);
-                const rect = el.getBoundingClientRect();
-                return {
-                    visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2
-                };
-            }).filter(el => el.visible);
-        }''')
-
-        # Check if there are any visible elements
-        if visible_elements:
-            # Attempt to click the first visible element
-            try:
-                first_visible = visible_elements[0]
-                # Execute the click
-                page.mouse.click(first_visible['x'], first_visible['y'], timeout=5000)
-                st.write(f"Clicked at ({first_visible['x']}, {first_visible['y']}).")
-            except TimeoutError as e:
-                st.error(f"Failed to click on element within timeout: {str(e)}")
-        else:
-            st.error("No visible elements found with the specified class.")
+        xpath = "/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form/div[1]/input"
+    
+        try:
+            # Use the XPath to click the element
+            page.click(f'xpath={xpath}', timeout=5000)  # Timeout after 5000 ms
+            st.success(f"Successfully clicked on the element at XPath '{xpath}'.")
+        except TimeoutError:
+            st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
         # page.click(f"#{action_class}:visible")
         # element_coordinates = page.evaluate('''
         #     (className) => {
