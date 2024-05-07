@@ -650,6 +650,8 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
                 col_act2.image(imgg, caption="Screenshot after action")
             else: 
                 col_act2.image(img)
+        else:
+            col_act2.image(img)
         if img:
             col_act1.image(img)
         
