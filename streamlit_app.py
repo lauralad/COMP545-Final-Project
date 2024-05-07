@@ -353,8 +353,11 @@ def install_playwright():
     # Install browsers used by Playwright
     os.system('playwright install')
 
-def execute_action(action_type, action_class, xpath=None):
-    
+def execute_action(predicted_action):
+    action_type = predicted_action[1][0]
+    action_uid = predicted_action[2]
+    xpath = predicted_action[3][1]
+
     screenshot_path = "screenshot.png"
     intent = action_type
     # intent = action['action']['intent']
@@ -365,8 +368,10 @@ def execute_action(action_type, action_class, xpath=None):
         # print(f"Loaded URL: {url}")
         st.write(f"Loaded URL: {url}")
     elif intent == 'click':
-        st.write(action_type)
-        st.write(action_class)
+        
+        action_class = predicted_action[3][0]
+        # st.write(action_type)
+        # st.write(action_class)
         # xpath = "/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form/div[1]/input"
     
         try:
@@ -406,10 +411,14 @@ def execute_action(action_type, action_class, xpath=None):
         else:
             st.error("Failed to get bounding box for the element.")
         
-    # if action['intent'] == 'load':
-    #     page.goto(action['arguments']['metadata']['url'])
-    # elif action['intent'] == 'click':
-    #     page.click(action['arguments']['element']['attributes']['class'])  # assuming xpath is always available
+    elif intent == 'text_input':
+        text = predicted_action[1][1]
+        try:
+            page.fill(f'xpath={xpath}', text)
+            st.success(f"Filled in the text '{text}' at the element with XPath '{xpath}'.")
+            page.screenshot(path=screenshot_path)
+        except TimeoutError:
+            st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
     # elif action['intent'] == 'textInput':
     #     page.fill(action['arguments']['element']['xpath'], action['text'])
     # elif action['intent'] == 'paste':
@@ -467,11 +476,11 @@ def execute_browser_actions(browser_actions):
             # print(f"Clicked at ({x}, {y})")
             page.wait_for_timeout(1000)  # Wait for 1 second for demonstration
         elif intent == "paste":
-            st.write(args)
+            # st.write(args)
             elem_html = args['element']['outerHTML']
             element_id, element_classes = extract_attributes(elem_html)
-            st.write(f"Element ID: {element_id}")
-            st.write(f"Element Classes: {element_classes}")
+            # st.write(f"Element ID: {element_id}")
+            # st.write(f"Element Classes: {element_classes}")
             # xpath_expression = f"xpath=//{class_name}"
             try:
                 # First try clicking by ID
@@ -613,11 +622,8 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
 
         action_str = f"**{event_type}**({arguments})"
         predicted_action = pred_mapping[str((demo_name, turn))]
-        action_type = predicted_action[1][0]
-        action_class = predicted_action[3][0]
-        action_uid = predicted_action[2]
-        xpath = predicted_action[3][1]
-        screenshot_path = execute_action(action_type, action_class, xpath)
+        
+        screenshot_path = execute_action(predicted_action)
         if screenshot_path:
             imgg = Image.open(screenshot_path)
             col_act2.image(imgg, caption="Screenshot after action")
