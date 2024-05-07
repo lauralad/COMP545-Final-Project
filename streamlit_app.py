@@ -413,6 +413,7 @@ def execute_action(predicted_action):
         
     elif intent == 'text_input':
         text = predicted_action[1][1]
+        st.write(f"Text: {text}")
         try:
             page.fill(f'xpath={xpath}', text)
             st.success(f"Filled in the text '{text}' at the element with XPath '{xpath}'.")
