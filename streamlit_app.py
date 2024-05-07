@@ -407,10 +407,14 @@ def execute_action(predicted_action):
         except TimeoutError:
             st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
         element = page.locator(f'xpath={xpath}')
-        bounding_box = element.bounding_box()
-        
-        if bounding_box:
-            draw_click_marker(bounding_box)
+        # bounding_box = element.bounding_box()
+        try:
+            # Attempt to get bounding box and draw click marker
+            bounding_box = element.bounding_box()
+            if bounding_box:
+                draw_click_marker(bounding_box)
+        except TimeoutError:
+            st.warning("Timeout occurred while trying to get bounding box. Continuing without drawing marker.")
         
     elif intent == 'text_input':
         text = predicted_action[1][1][1]
