@@ -420,14 +420,23 @@ def execute_action(predicted_action):
             page.screenshot(path=screenshot_path)
         except TimeoutError:
             st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
-    # elif action['intent'] == 'textInput':
-    #     page.fill(action['arguments']['element']['xpath'], action['text'])
-    # elif action['intent'] == 'paste':
-    #     # Simulate paste action (Playwright doesn't have a direct paste method)
-    #     page.type(action['arguments']['element']['xpath'], action['pasted'])
-    # elif action['intent'] == 'submit':
-    #     page.query_selector(action['arguments']['element']['xpath']).evaluate("element => element.submit()")
-    # page.screenshot(path=screenshot_path)
+
+    elif intent == 'submit':
+        # page.query_selector(xpath).evaluate("element => element.submit()")
+        form_locator = page.locator(f'xpath={xpath}')
+        
+        # Check if the form is found and visible
+        if form_locator.count() > 0:
+            # Submit the form by evaluating JavaScript on the form element
+            form_locator.evaluate("form => form.submit()")
+            
+            # Optionally, you might want to wait for a navigation event if the form submission leads to a new page
+            # page.wait_for_navigation(timeout=5000)  # Waits for 5 seconds for navigation to complete
+            
+            st.success("Form submitted successfully.")
+        else:
+            st.error("No form found with the specified XPath.")
+    page.screenshot(path=screenshot_path)
     
     return screenshot_path
 
