@@ -403,9 +403,10 @@ def execute_action(predicted_action):
         try:
             # Use the XPath to click the element
             page.click(f'xpath={xpath}', timeout=5000)  # Timeout after 5000 ms
-            st.success(f"Successfully clicked on the element at XPath '{xpath}'.")
+            # st.success(f"Successfully clicked on the element at XPath '{xpath}'.")
         except TimeoutError:
-            st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
+            pass
+            # st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
         element = page.locator(f'xpath={xpath}')
         # bounding_box = element.bounding_box()
         try:
@@ -414,17 +415,19 @@ def execute_action(predicted_action):
             if bounding_box:
                 draw_click_marker(bounding_box)
         except TimeoutError:
-            st.warning("Timeout occurred while trying to get bounding box. Continuing without drawing marker.")
+            pass
+            # st.warning("Timeout occurred while trying to get bounding box. Continuing without drawing marker.")
         
     elif intent == 'text_input':
         text = predicted_action[1][1][1]
-        st.write(f"Text: {text}")
+        # st.write(f"Text: {text}")
         try:
             page.fill(f'xpath={xpath}', text)
-            st.success(f"Filled in the text '{text}' at the element with XPath '{xpath}'.")
+            # st.success(f"Filled in the text '{text}' at the element with XPath '{xpath}'.")
             page.screenshot(path=screenshot_path)
         except TimeoutError:
-            st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
+            pass
+            # st.error(f"Failed to click on the element at XPath '{xpath}' within 5 seconds.")
 
     elif intent == 'submit':
         # page.query_selector(xpath).evaluate("element => element.submit()")
@@ -438,9 +441,10 @@ def execute_action(predicted_action):
             # Optionally, you might want to wait for a navigation event if the form submission leads to a new page
             # page.wait_for_navigation(timeout=5000)  # Waits for 5 seconds for navigation to complete
             
-            st.success("Form submitted successfully.")
+            # st.success("Form submitted successfully.")
         else:
-            st.error("No form found with the specified XPath.")
+            pass
+            # st.error("No form found with the specified XPath.")
     page.screenshot(path=screenshot_path)
     
     return screenshot_path
