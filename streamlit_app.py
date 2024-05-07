@@ -640,18 +640,16 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         event_type = d["action"]["intent"]
 
         action_str = f"**{event_type}**({arguments})"
-        predicted_action = pred_mapping[str((demo_name, turn))]
-        
         if i == turn:
-            screenshot_path = execute_action(predicted_action)
-            if screenshot_path:
-            
+            predicted_action = pred_mapping[str((demo_name, turn))]
+        
+        screenshot_path = execute_action(predicted_action)
+        if screenshot_path:
+            if i == turn:
                 imgg = Image.open(screenshot_path)
                 col_act2.image(imgg, caption="Screenshot after action")
             else: 
                 col_act2.image(img)
-        else:
-            col_act2.image(img)
         if img:
             col_act1.image(img)
         
