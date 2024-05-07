@@ -353,6 +353,32 @@ def install_playwright():
     # Install browsers used by Playwright
     os.system('playwright install')
 
+def draw_click_marker(bounding_box):
+    # Calculate the center of the element
+    x = bounding_box['x'] + bounding_box['width'] / 2
+    y = bounding_box['y'] + bounding_box['height'] / 2
+    
+    # Draw a visual marker using JavaScript
+    page.evaluate('''
+        ({x, y}) => {
+            const circle = document.createElement('div');
+            circle.style.position = 'absolute';
+            circle.style.borderRadius = '50%';
+            circle.style.background = 'red';
+            circle.style.width = '20px';
+            circle.style.height = '20px';
+            circle.style.left = `${x - 10}px`;
+            circle.style.top = `${y - 10}px`;
+            circle.style.zIndex = '10000';
+            document.body.appendChild(circle);
+
+            // Optional: Remove the circle after some time
+            setTimeout(() => document.body.removeChild(circle), 1000);
+        }
+    ''', {'x': x, 'y': y})
+
+    st.write(f"Marked click position at ({x}, {y})")
+
 def execute_action(predicted_action):
     action_type = predicted_action[1][0]
     action_uid = predicted_action[2]
@@ -384,32 +410,7 @@ def execute_action(predicted_action):
         bounding_box = element.bounding_box()
         
         if bounding_box:
-            # Calculate the center of the element
-            x = bounding_box['x'] + bounding_box['width'] / 2
-            y = bounding_box['y'] + bounding_box['height'] / 2
-            
-            # Use JavaScript to add a visual marker at the click position
-            page.evaluate(f'''
-                const circle = document.createElement('div');
-                circle.style.position = 'absolute';
-                circle.style.borderRadius = '50%';
-                circle.style.background = 'red';
-                circle.style.width = '20px';
-                circle.style.height = '20px';
-                circle.style.left = '{x - 10}px';
-                circle.style.top = '{y - 10}px';
-                circle.style.zIndex = '10000';
-                document.body.appendChild(circle);
-
-                // Optional: Remove the circle after some time
-                setTimeout(() => document.body.removeChild(circle), 1000);
-            ''')
-
-            # Take a screenshot after the click and marker addition
-            page.screenshot(path=screenshot_path)
-            # st.success(f"Successfully clicked on the element at XPath '{xpath}' and marked the click location.")
-        else:
-            st.error("Failed to get bounding box for the element.")
+            draw_click_marker(bounding_box)
         
     elif intent == 'text_input':
         text = predicted_action[1][1][1]
@@ -436,7 +437,7 @@ def execute_action(predicted_action):
             st.success("Form submitted successfully.")
         else:
             st.error("No form found with the specified XPath.")
-        page.screenshot(path=screenshot_path)
+    page.screenshot(path=screenshot_path)
     
     return screenshot_path
 
