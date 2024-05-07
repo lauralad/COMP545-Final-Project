@@ -436,7 +436,7 @@ def execute_action(predicted_action):
             st.success("Form submitted successfully.")
         else:
             st.error("No form found with the specified XPath.")
-    page.screenshot(path=screenshot_path)
+        page.screenshot(path=screenshot_path)
     
     return screenshot_path
 
