@@ -616,8 +616,8 @@ def show_overview(data, model_name, recording_name, dataset, demo_name, turn, ba
         action_type = predicted_action[1][0]
         action_class = predicted_action[3][0]
         action_uid = predicted_action[2]
-
-        screenshot_path = execute_action(action_type, action_class)
+        xpath = predicted_action[3][1]
+        screenshot_path = execute_action(action_type, action_class, xpath)
         if screenshot_path:
             imgg = Image.open(screenshot_path)
             col_act2.image(imgg, caption="Screenshot after action")
