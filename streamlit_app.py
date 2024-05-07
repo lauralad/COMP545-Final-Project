@@ -323,7 +323,7 @@ def setup_datasets():
     # if the predicted candidate's class is "get", it means that it's a submit action and it should do something along the lines of click enter. Example of what one of these looks like right below
     # ['submit(uid="c7fbc11c-0949-4ab2")', -['submit', 'c7fbc11c-0949-4ab2'], 'c7fbc11c-0949-4ab2', ['get', '/html/body/div[2]/div/div/div[1]/div[2]/div[3]/form']]
     pred_mapping = get_preds()
-    st.write(pred_mapping)
+    # st.write(pred_mapping)
     unique_data_dict = load_and_prepare_data()
 
 def setup_browser():
