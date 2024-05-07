@@ -412,7 +412,7 @@ def execute_action(predicted_action):
             st.error("Failed to get bounding box for the element.")
         
     elif intent == 'text_input':
-        text = predicted_action[1][1]
+        text = predicted_action[1][1][1]
         st.write(f"Text: {text}")
         try:
             page.fill(f'xpath={xpath}', text)
